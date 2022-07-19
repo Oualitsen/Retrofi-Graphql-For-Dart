@@ -1,0 +1,46 @@
+
+scalar hello
+
+directive @skip2(if: InputTest) on INTERFACE
+directive @skip3(if: [InputTest]) on INTERFACE
+
+interface Test @skip2(if: {
+    test: false
+})
+@skip3(if: [
+    {test: false}
+])
+{
+    test: Boolean
+}
+
+type Query {
+    get: Int!
+}
+
+type Sub {
+    get: Int!
+}
+schema {
+    query: Query
+    subscription: Sub
+    mutation: Test2
+
+
+}
+
+input InputTest {
+    test: Boolean = true
+}
+
+type Test2 implements Test {
+    name: String!
+    test: Boolean
+    next: Test2
+}
+
+fragment Test on Test2 {
+    name
+    hello:test
+
+}
