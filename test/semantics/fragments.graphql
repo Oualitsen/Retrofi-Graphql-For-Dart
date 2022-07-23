@@ -1,0 +1,69 @@
+
+
+
+
+interface UserBase {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    address: Address
+}
+
+type Address {
+    street: String!
+    city: City!
+    zipCode: String
+}
+
+type Admin implements UserBase {
+
+    firstName: String!
+    lastName: String!
+    middleName: String
+    address: Address
+    username: String!
+    password: String!
+}
+
+type City {
+    name: String!
+    id: String!
+    state: State
+}
+
+type State {
+    name: String!
+    nameAr: String!
+    area: Float!
+}
+
+fragment CityFragment on City {
+    name id state {
+        ... StateFragment
+    }
+}
+
+fragment StateFragment on State {
+    name nameAr area
+}
+
+fragment UserFragment on UserBase {
+    firstName lastName address ... on Address {
+        state city {
+            ... CityFragment
+        }
+    }
+    address {
+        ... AddressFragment
+    }
+}
+
+fragment AddressFragment on Address {
+    street city {
+        ... CityFragment
+    } zipCode __typename
+}
+
+
+
+

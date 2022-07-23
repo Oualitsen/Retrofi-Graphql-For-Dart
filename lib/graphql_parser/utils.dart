@@ -1,4 +1,4 @@
-import 'package:parser/graphql_parser/model/token.dart';
+import 'package:parser/graphql_parser/model/gq_token.dart';
 
 String serializeList(List<GQToken>? list,
     {String join = ", ", bool withParenthesis = true}) {

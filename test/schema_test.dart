@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parser/graphql_parser/grammar.dart';
+import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:petitparser/petitparser.dart';
 
 final GraphQlGrammar g = GraphQlGrammar();

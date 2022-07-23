@@ -1,9 +1,9 @@
 import 'package:parser/graphql_parser/model/gq_directive.dart';
-import 'package:parser/graphql_parser/model/token.dart';
+import 'package:parser/graphql_parser/model/gq_token.dart';
 
 class GQEnumDefinition extends GQTokenWithDirectives {
   List<GQEnumValue> values;
-  List<GQDirective> list;
+  List<GQDirectiveValue> list;
 
   GQEnumDefinition(
       {required String name, required this.values, required this.list})
@@ -15,7 +15,7 @@ class GQEnumDefinition extends GQTokenWithDirectives {
   }
 
   @override
-  List<GQDirective> get directives => list;
+  List<GQDirectiveValue> get directives => list;
 }
 
 class GQEnumValue {

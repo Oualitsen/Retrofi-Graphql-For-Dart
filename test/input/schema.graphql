@@ -1,0 +1,18 @@
+
+
+
+input UserInput {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    address: AddressInput
+}
+
+input AddressInput {
+    street: String!
+    wilayaId: Int!
+    city: String
+    
+}
+
+#union MyU = AddressInput | UserInput

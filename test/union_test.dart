@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parser/graphql_parser/grammar.dart';
+import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:parser/graphql_parser/model/gq_union.dart';
 import 'package:petitparser/petitparser.dart';
 
@@ -7,21 +7,22 @@ void main() {
   test("Union serialization", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var union = GQDefinition("type", ["User"]);
+    var union = GQUnionDefinition("type", ["User"]);
     expect(union.serialize(), "union type = User");
   });
 
   test("Union serialization with multiple types", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var union = GQDefinition("type", ["User", "Client"]);
+    var union = GQUnionDefinition("type", ["User", "Client"]);
     expect(union.serialize(), "union type = User | Client");
   });
 
   test("Parse union", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build<GQDefinition>(start: () => g.parseUnion().end());
+    var parser =
+        g.build<GQUnionDefinition>(start: () => g.unionDefinition().end());
     var result = parser.parse('''
     union type = User | Client
     ''');
@@ -33,7 +34,8 @@ void main() {
   test("Parse union", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build<GQDefinition>(start: () => g.parseUnion().end());
+    var parser =
+        g.build<GQUnionDefinition>(start: () => g.unionDefinition().end());
     var result = parser.parse('''
     union type = User
     ''');

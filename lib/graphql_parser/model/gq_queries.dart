@@ -1,14 +1,14 @@
 import 'package:parser/graphql_parser/model/gq_directive.dart';
 import 'package:parser/graphql_parser/model/gq_argument.dart';
-import 'package:parser/graphql_parser/model/gq_fragments.dart';
+import 'package:parser/graphql_parser/model/gq_fragment.dart';
 import 'package:parser/graphql_parser/excpetions/parse_error.dart';
-import 'package:parser/graphql_parser/model/token.dart';
+import 'package:parser/graphql_parser/model/gq_token.dart';
 import 'package:parser/graphql_parser/utils.dart';
 
 enum GQQueryType { query, mutation, subscription }
 
 class GQDefinition extends GQTokenWithDirectives {
-  final List<GQDirective> list;
+  final List<GQDirectiveValue> list;
   final List<GQArgumentDefinition> arguments;
   final List<GQQueryElement> elements;
   final GQQueryType type;
@@ -47,7 +47,7 @@ class GQDefinition extends GQTokenWithDirectives {
   }
 
   @override
-  List<GQDirective> get directives => list;
+  List<GQDirectiveValue> get directives => list;
 
   @override
   String serialize() {
@@ -59,7 +59,7 @@ class GQDefinition extends GQTokenWithDirectives {
 }
 
 class GQQueryElement extends GQTokenWithDirectives {
-  final List<GQDirective> list;
+  final List<GQDirectiveValue> list;
   final GQFragmentBlock? block;
   final List<GQArgumentValue> arguments;
 
@@ -67,7 +67,7 @@ class GQQueryElement extends GQTokenWithDirectives {
       : super(name);
 
   @override
-  List<GQDirective> get directives => list;
+  List<GQDirectiveValue> get directives => list;
 
   @override
   String serialize() {

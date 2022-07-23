@@ -1,4 +1,4 @@
-import 'package:parser/graphql_parser/model/token.dart';
+import 'package:parser/graphql_parser/model/gq_token.dart';
 
 class GQType extends GQToken {
   final bool nullable;

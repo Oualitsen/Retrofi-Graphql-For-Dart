@@ -1,7 +1,7 @@
 import 'package:parser/graphql_parser/excpetions/parse_error.dart';
 import 'package:parser/graphql_parser/model/gq_schema.dart';
 import 'package:parser/graphql_parser/model/gq_enum_definition.dart';
-import 'package:parser/graphql_parser/model/gq_fragments.dart';
+import 'package:parser/graphql_parser/model/gq_fragment.dart';
 import 'package:parser/graphql_parser/model/gq_input_type.dart';
 import 'package:parser/graphql_parser/model/gq_interface.dart';
 import 'package:parser/graphql_parser/model/gq_union.dart';
@@ -17,7 +17,7 @@ mixin GrammarDataMixin {
     "null"
   };
   final Map<String, GQFragmentDefinition> fragments = {};
-  final Map<String, GQDefinition> unions = {};
+  final Map<String, GQUnionDefinition> unions = {};
   final Map<String, GQInputDefinition> inputs = {};
   final Map<String, GQTypeDefinition> types = {};
   final Map<String, GQInterfaceDefinition> interfaces = {};
@@ -44,7 +44,7 @@ mixin GrammarDataMixin {
     fragments[fragment.name] = fragment;
   }
 
-  void addUnionDefinition(GQDefinition union) {
+  void addUnionDefinition(GQUnionDefinition union) {
     if (unions.containsKey(union.name)) {
       throw ParseError("Union ${union.name} has already been declared");
     }
@@ -92,9 +92,6 @@ mixin GrammarDataMixin {
         map = subscriptions;
         break;
     }
-
-    print("map = ${map.keys}");
-
     if (map.containsKey(definition.name)) {
       throw ParseError(
           "${definition.type.name} ${definition.name} has already been declared");
@@ -116,7 +113,7 @@ mixin GrammarDataMixin {
 
   void checkInput(String inputName) {
     if (!inputs.containsKey(inputName)) {
-      throw ParseError("Input $inputName  undefined");
+      throw ParseError("Input $inputName undefined");
     }
   }
 
@@ -138,5 +135,11 @@ mixin GrammarDataMixin {
     if (!scalars.contains(scalarName)) {
       throw ParseError("Scalar $scalarName was not declared");
     }
+  }
+
+  void updateFragmentDependencies() {
+    fragments.forEach((key, value) {
+      value.updateDepencies(fragments);
+    });
   }
 }

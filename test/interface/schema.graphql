@@ -1,0 +1,32 @@
+
+
+
+interface UserInput {
+    firstName: String!
+    lastName: String!
+    middleName: String
+
+}
+
+interface AddressInput implements UserInput {
+    street: String!
+    wilayaId: Int!
+    city: String
+
+    firstName: String!
+    lastName: String!
+    middleName: String
+}
+
+type User implements UserBase {
+    name: String
+
+    firstName: String!
+    lastName: String!
+    middleName: String
+
+}
+
+
+
+#union MyU = AddressInput | UserInput

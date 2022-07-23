@@ -1,5 +1,5 @@
 import 'package:parser/graphql_parser/model/gq_argument.dart';
-import 'package:parser/graphql_parser/model/token.dart';
+import 'package:parser/graphql_parser/model/gq_token.dart';
 
 class GQDirectiveDefinition {
   final String name;
@@ -30,11 +30,11 @@ enum GQDirectiveLocation {
   VARIABLE_DEFINITION
 }
 
-class GQDirective extends GQToken {
+class GQDirectiveValue extends GQToken {
   final List<GQDirectiveLocation> locations;
   final List<GQArgumentValue> arguments;
 
-  GQDirective(String name, this.locations, this.arguments) : super(name);
+  GQDirectiveValue(String name, this.locations, this.arguments) : super(name);
 
   @override
   String serialize() {

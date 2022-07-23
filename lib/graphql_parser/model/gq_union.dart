@@ -1,9 +1,9 @@
-import 'package:parser/graphql_parser/model/token.dart';
+import 'package:parser/graphql_parser/model/gq_token.dart';
 import 'package:parser/graphql_parser/utils.dart';
 
-class GQDefinition extends GQToken {
+class GQUnionDefinition extends GQToken {
   final List<String> typeNames;
-  GQDefinition(String name, this.typeNames) : super(name);
+  GQUnionDefinition(String name, this.typeNames) : super(name);
 
   @override
   String serialize() {

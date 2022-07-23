@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parser/graphql_parser/grammar.dart';
+import 'package:parser/graphql_parser/gq_grammar.dart';
 
 void main() {
   runApp(const MyApp());

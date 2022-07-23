@@ -1,0 +1,71 @@
+
+scalar Long
+
+
+schema {
+
+    query: Azul
+    mutation: Mutation
+}
+
+
+
+type Azul {
+    """
+    Hello
+    """
+    name: String!
+}
+
+type Mutation {
+    name: String!
+}
+
+"""
+Hello world this is me
+"""
+interface UserBase {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    address: Address
+}
+
+#union goes here
+"""
+Documentation for union
+"""
+union izan = Address | Admin
+
+
+type Address {
+    street: String!
+    city: String!
+    state: String
+    zipCode: String
+}
+
+type Admin implements UserBase{
+
+    firstName: String!
+    lastName: String!
+    middleName: String
+    address: Address
+
+    username: String!
+    password: String!
+}
+
+fragment UserFragment on UserBase {
+    firstName lastName address {
+        state ...AddressFragment
+    }
+}
+
+fragment AddressFragment on Address {
+    street state city zipCode __typename
+}
+
+
+
+
