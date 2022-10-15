@@ -1,12 +1,16 @@
 import 'dart:core';
 import 'package:petitparser/petitparser.dart';
 
-class ParseError {
+class ParseException {
   final String message;
   final Parser? parser;
   final String? parserName;
+  final String? fileName;
+  final int? line;
+  final int? column;
 
-  ParseError(this.message, {this.parser, this.parserName});
+  ParseException(this.message,
+      {this.parser, this.parserName, this.fileName, this.line, this.column});
 
   @override
   String toString() {

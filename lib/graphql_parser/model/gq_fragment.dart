@@ -1,4 +1,4 @@
-import 'package:parser/graphql_parser/excpetions/parse_error.dart';
+import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
 import 'package:parser/graphql_parser/model/gq_directive.dart';
 import 'package:parser/graphql_parser/model/gq_token.dart';
 import 'package:parser/graphql_parser/utils.dart';
@@ -33,12 +33,18 @@ class GQFragmentDefinition extends GQTokenWithDirectives {
   }
 
   void updateDepencies(Map<String, GQFragmentDefinition> map) {
-    var set = block.getDependecies(map);
-    print("fragment $name depends on $set");
+    final Set<String> dependecyNames = block.getDependecies(map);
+    for (var name in dependecyNames) {
+      var def = map[name];
+      if (def == null) {
+        throw ParseException("Fragment $name is not defined");
+      }
+      dependecies.add(def);
+    }
   }
 }
 
-class GQFragmentField extends GQToken {
+class GQProjection extends GQTokenWithDirectives {
   final String? alias;
 
   ///
@@ -57,7 +63,7 @@ class GQFragmentField extends GQToken {
 
   final List<GQDirectiveValue> directiveList;
 
-  GQFragmentField({
+  GQProjection({
     required String name,
     required this.alias,
     required this.isFragment,
@@ -71,7 +77,14 @@ class GQFragmentField extends GQToken {
     return serialize();
   }
 
-  List<GQDirectiveValue> get directive => directiveList;
+  @override
+  List<GQDirectiveValue> get directives => directiveList;
+
+  String get uniqueName {
+    return "${actualName}_";
+  }
+
+  String get actualName => alias ?? name;
 
   @override
   String serialize() {
@@ -84,7 +97,8 @@ class GQFragmentField extends GQToken {
     } else {
       result += name;
     }
-    result += " ${serializeList(directive, join: " ", withParenthesis: false)}";
+    result +=
+        " ${serializeList(directives, join: " ", withParenthesis: false)}";
 
     result += block?.serialize() ?? '';
 
@@ -99,7 +113,7 @@ class GQFragmentField extends GQToken {
 
         var frag = map[name];
         if (frag == null) {
-          throw ParseError("Fragment $name is not defined");
+          throw ParseException("Fragment $name is not defined");
         } else {
           result.addAll(frag.block.getDependecies(map));
         }
@@ -108,16 +122,16 @@ class GQFragmentField extends GQToken {
         ///This should be an inline fragment
         ///
 
-        var inlineFrag = this as GQInlineFragment;
+        var inlineFrag = this as GQInlineFragmentDefinition;
         var block = inlineFrag.block;
         if (block == null) {
-          throw ParseError("Inline Fragment must have a body");
+          throw ParseException("Inline Fragment must have a body");
         }
         result.addAll(block.getDependecies(map));
       }
     }
     if (block != null) {
-      var children = block!.children;
+      var children = block!.projections.values;
       for (var element in children) {
         result.addAll(element.getDependecies(map));
       }
@@ -127,9 +141,9 @@ class GQFragmentField extends GQToken {
   }
 }
 
-class GQInlineFragment extends GQFragmentField {
+class GQInlineFragmentDefinition extends GQProjection {
   final String typeName;
-  GQInlineFragment(
+  GQInlineFragmentDefinition(
       this.typeName, GQFragmentBlock block, List<GQDirectiveValue> directives)
       : super(
           name: "",
@@ -138,17 +152,33 @@ class GQInlineFragment extends GQFragmentField {
           alias: null,
           directiveList: directives,
         );
+
+  @override
+  get name => "${typeName}_${block!.uniqueName}";
 }
 
 class GQFragmentBlock extends GQToken {
-  final List<GQFragmentField> children;
+  final Map<String, GQProjection> projections = {};
 
-  GQFragmentBlock(this.children) : super("");
+  GQFragmentBlock(List<GQProjection> projections) : super("") {
+    for (var element in projections) {
+      this.projections[element.name] = element;
+    }
+  }
+
+  GQProjection getProjection(String name) {
+    final p = projections[name];
+    if (p == null) {
+      throw ParseException(
+          "Projection $name was not found on Fragment ${this.name}");
+    }
+    return p;
+  }
 
   @override
   String serialize() {
     return """{
-      ${serializeList(children, join: " ", withParenthesis: false)}
+      ${serializeList(projections.values.toList(), join: " ", withParenthesis: false)}
     }""";
   }
 
@@ -159,9 +189,16 @@ class GQFragmentBlock extends GQToken {
 
   Set<String> getDependecies(Map<String, GQFragmentDefinition> map) {
     var result = <String>{};
-    for (var v in children) {
+    var _projections = projections.values;
+    for (var v in _projections) {
       result.addAll(v.getDependecies(map));
     }
     return result;
+  }
+
+  String get uniqueName {
+    final keys = projections.keys.toList();
+    keys.sort();
+    return keys.join("_");
   }
 }

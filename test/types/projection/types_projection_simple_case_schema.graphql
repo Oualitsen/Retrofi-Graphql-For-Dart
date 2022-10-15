@@ -1,0 +1,38 @@
+
+type DataBase {
+    name: String!
+    noSQL: Boolean!
+    firstReleaseYear: Int
+}
+
+fragment DataBaseFragment on DataBase {
+    name noSQL
+}
+
+type User {
+    firstName: String!
+    lastName: String!
+    address: UserAddress!
+}
+
+type UserAddress {
+    street: String!
+    zipCode: String!
+    city: String
+    state: String!
+}
+
+fragment UserAddressFragment on UserAddress {
+    street
+}
+
+fragment UserFragment on User {
+    firstName address {
+        city state
+        ... UserAddressFragment
+    }
+}
+
+
+
+

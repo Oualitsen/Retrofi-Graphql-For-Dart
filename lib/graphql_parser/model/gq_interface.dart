@@ -6,17 +6,17 @@ import 'package:parser/graphql_parser/model/gq_token.dart';
 class GQInterfaceDefinition extends GQTokenWithFields
     implements DartSerializable {
   final Set<GQInterfaceDefinition> parents = <GQInterfaceDefinition>{};
-  final Set<String> parenNames;
+  final Set<String> parentNames;
 
   GQInterfaceDefinition({
     required String name,
     required List<GQField> fields,
-    required this.parenNames,
+    required this.parentNames,
   }) : super(name, fields);
 
   @override
   String toString() {
-    return 'GraphQLInterface{name: $name, fields: $fields, parenNames:$parenNames}';
+    return 'GraphQLInterface{name: $name, fields: $fields, parenNames:$parentNames}';
   }
 
   @override

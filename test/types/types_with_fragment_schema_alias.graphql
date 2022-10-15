@@ -1,0 +1,11 @@
+
+type DataBase {
+    name: String!
+    noSQL: Boolean!
+    firstReleaseYear: Int
+}
+
+fragment DataBaseFragment on DataBase {
+    dbname:name, noSQL
+}
+

@@ -1,7 +1,7 @@
 import 'package:parser/graphql_parser/model/gq_directive.dart';
 import 'package:parser/graphql_parser/model/gq_argument.dart';
 import 'package:parser/graphql_parser/model/gq_fragment.dart';
-import 'package:parser/graphql_parser/excpetions/parse_error.dart';
+import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
 import 'package:parser/graphql_parser/model/gq_token.dart';
 import 'package:parser/graphql_parser/utils.dart';
 
@@ -31,7 +31,7 @@ class GQDefinition extends GQTokenWithDirectives {
       if ("${arg.value}".startsWith("\$")) {
         var check = checkValue("${arg.value}");
         if (!check) {
-          throw ParseError("Argument ${arg.value} was not declared");
+          throw ParseException("Argument ${arg.value} was not declared");
         }
       }
     }

@@ -17,13 +17,12 @@ abstract class GQTokenWithDirectives extends GQToken {
 
 abstract class GQTokenWithFields extends GQToken {
   final List<GQField> fields;
-  final Set<String> fieldNames = {};
 
-  GQTokenWithFields(String name, this.fields) : super(name) {
-    fieldNames.addAll(fields.map((e) => e.name));
-  }
+  GQTokenWithFields(String name, this.fields) : super(name);
 
   bool hasField(String name) {
-    return fieldNames.contains(name);
+    return fields.map((e) => e.name).contains(name);
   }
+
+  Set<String> get fieldNames => fields.map((e) => e.name).toSet();
 }

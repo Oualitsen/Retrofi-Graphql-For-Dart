@@ -71,7 +71,7 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
     return """
       
       class $name ${interfaceNames.isEmpty ? '' : 'extends '} ${interfaceNames.join(" ")} {
-          ${serializeListText(fields.map((e) => e.toDart(grammar)).toList(), join: "\r", withParenthesis: false)}
+          ${serializeListText(fields.map((e) => e.toDart(grammar)).toList(), join: "\n\r", withParenthesis: false)}
       }
       
     """;
@@ -80,5 +80,13 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
   @override
   String serialize() {
     throw UnimplementedError();
+  }
+
+  GQTypeDefinition clone(String newName) {
+    return GQTypeDefinition(
+      name: newName,
+      fields: fields.toList(),
+      interfaceNames: interfaceNames,
+    );
   }
 }

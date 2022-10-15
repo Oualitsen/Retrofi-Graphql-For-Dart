@@ -1,0 +1,28 @@
+
+
+
+interface UserInput1{
+    firstName: String!
+    lastName: String!
+    middleName: String
+}
+
+interface AddressInput1 implements UserInput1 {
+    street: String!
+    wilayaId: Int!
+    city: String
+
+    firstName: String!
+    lastName: String!
+    middleName: String
+}
+
+type User implements UserInput1 {
+    name: String
+
+    firstName: String!
+    lastName: String!
+    middleName: String
+
+}
+

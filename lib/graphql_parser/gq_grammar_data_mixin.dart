@@ -1,4 +1,5 @@
-import 'package:parser/graphql_parser/excpetions/parse_error.dart';
+import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
+import 'package:parser/graphql_parser/model/gq_field.dart';
 import 'package:parser/graphql_parser/model/gq_schema.dart';
 import 'package:parser/graphql_parser/model/gq_enum_definition.dart';
 import 'package:parser/graphql_parser/model/gq_fragment.dart';
@@ -17,6 +18,7 @@ mixin GrammarDataMixin {
     "null"
   };
   final Map<String, GQFragmentDefinition> fragments = {};
+  final Map<String, GQInlineFragmentDefinition> inlineFragments = {};
   final Map<String, GQUnionDefinition> unions = {};
   final Map<String, GQInputDefinition> inputs = {};
   final Map<String, GQTypeDefinition> types = {};
@@ -31,7 +33,7 @@ mixin GrammarDataMixin {
 
   void addScalarDefinition(String scalar) {
     if (scalars.contains(scalar)) {
-      throw "Scalar $scalar has already been declared";
+      throw ParseException("Scalar $scalar has already been declared");
     }
 
     scalars.add(scalar);
@@ -39,42 +41,45 @@ mixin GrammarDataMixin {
 
   void addFragmentDefinition(GQFragmentDefinition fragment) {
     if (fragments.containsKey(fragment.name)) {
-      throw ParseError("Fragment ${fragment.name} has already been declared");
+      throw ParseException(
+          "Fragment ${fragment.name} has already been declared");
     }
     fragments[fragment.name] = fragment;
   }
 
   void addUnionDefinition(GQUnionDefinition union) {
     if (unions.containsKey(union.name)) {
-      throw ParseError("Union ${union.name} has already been declared");
+      throw ParseException("Union ${union.name} has already been declared");
     }
     unions[union.name] = union;
   }
 
   void addInputDefinition(GQInputDefinition input) {
     if (inputs.containsKey(input.name)) {
-      throw ParseError("Input ${input.name} has already been declared");
+      throw ParseException("Input ${input.name} has already been declared");
     }
     inputs[input.name] = input;
   }
 
   void addTypeDefinition(GQTypeDefinition type) {
     if (types.containsKey(type.name)) {
-      throw ParseError("Type ${type.name} has already been declared");
+      throw ParseException("Type ${type.name} has already been declared");
     }
     types[type.name] = type;
   }
 
   void addInterfaceDefinition(GQInterfaceDefinition interface) {
     if (interfaces.containsKey(interface.name)) {
-      throw ParseError("Interface ${interface.name} has already been declared");
+      throw ParseException(
+          "Interface ${interface.name} has already been declared");
     }
     interfaces[interface.name] = interface;
   }
 
   void addEnumDefinition(GQEnumDefinition enumDefinition) {
     if (enums.containsKey(enumDefinition.name)) {
-      throw ParseError("Enum ${enumDefinition.name} has already been declared");
+      throw ParseException(
+          "Enum ${enumDefinition.name} has already been declared");
     }
     enums[enumDefinition.name] = enumDefinition;
   }
@@ -93,7 +98,7 @@ mixin GrammarDataMixin {
         break;
     }
     if (map.containsKey(definition.name)) {
-      throw ParseError(
+      throw ParseException(
           "${definition.type.name} ${definition.name} has already been declared");
     }
     map[definition.name] = definition;
@@ -107,25 +112,25 @@ mixin GrammarDataMixin {
         interfaces.containsKey(name) ||
         enums.containsKey(name);
     if (!b) {
-      throw ParseError("Type $name undefined");
+      throw ParseException("Type $name undefined");
     }
   }
 
   void checkInput(String inputName) {
     if (!inputs.containsKey(inputName)) {
-      throw ParseError("Input $inputName undefined");
+      throw ParseException("Input $inputName undefined");
     }
   }
 
   void checkInterface(String interface) {
     if (!interfaces.containsKey(interface)) {
-      throw ParseError("Interface $interface undefined");
+      throw ParseException("Interface $interface undefined");
     }
   }
 
   void defineSchema(GQSchema schema) {
     if (schemaInitialized) {
-      throw ParseError("A schema has already been defined");
+      throw ParseException("A schema has already been defined");
     }
     schemaInitialized = true;
     this.schema = schema;
@@ -133,7 +138,7 @@ mixin GrammarDataMixin {
 
   void checkScalar(String scalarName) {
     if (!scalars.contains(scalarName)) {
-      throw ParseError("Scalar $scalarName was not declared");
+      throw ParseException("Scalar $scalarName was not declared");
     }
   }
 
@@ -141,5 +146,70 @@ mixin GrammarDataMixin {
     fragments.forEach((key, value) {
       value.updateDepencies(fragments);
     });
+  }
+
+  GQTypeDefinition defineTypeWithFragment(
+      GQTypeDefinition type, GQFragmentDefinition fragment) {
+    /**
+     * Check if fragment applies to this type
+     */
+
+    if (fragment.onTypeName != type.name) {
+      throw ParseException(
+          "Fragment $fragment does not apply to $type. It applies to ${fragment.onTypeName}");
+    }
+    final children = fragment.block.projections;
+    final fields = <GQField>[];
+    for (var field in type.fields) {
+      var projection = children[field.name];
+      if (projection != null) {
+        fields.add(applyProjection(field, projection));
+      }
+    }
+
+    type.fields.clear();
+    type.fields.addAll(fields);
+
+    return type;
+  }
+
+  GQField applyProjection(GQField field, GQProjection projection) {
+    final String fieldName = projection.alias ?? field.name;
+    if (projection.isFragment) {}
+    return GQField(
+      name: fieldName,
+      type: field.type,
+      arguments: field.arguments,
+    );
+  }
+
+  GQTypeDefinition getType(String name) {
+    final type = types[name];
+    if (type == null) {
+      throw ParseException("Type $name has was not found");
+    }
+    return type;
+  }
+
+  GQFragmentDefinition getFragment(String name) {
+    final type = fragments[name];
+    if (type == null) {
+      throw ParseException("Fragment $name has was not found");
+    }
+    return type;
+  }
+
+  GQInterfaceDefinition getInterface(String name) {
+    final type = interfaces[name];
+    if (type == null) {
+      throw ParseException("Interface $name has was not found");
+    }
+    return type;
+  }
+
+  void updateDirectives() {
+    /**
+     * @TODO
+     */
   }
 }
