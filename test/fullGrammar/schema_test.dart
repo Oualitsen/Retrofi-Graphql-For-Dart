@@ -9,7 +9,7 @@ void main() async {
     final GraphQlGrammar g = GraphQlGrammar();
     var parser = g.build(start: () => g.fullGrammar().end());
 
-    final text = File("test/fullGrammar/schema.graphql").readAsStringSync();
+    final text = File("test/schema.graphql").readAsStringSync();
 
     var parsed = parser.parse(text);
     expect(parsed.isSuccess, true);

@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:petitparser/petitparser.dart';
 
-final GraphQlGrammar g = GraphQlGrammar();
-
 void main() {
   test("Type test", () {
+    final GraphQlGrammar g = GraphQlGrammar();
+
     var parser = g.build(start: () => g.typeDefinition().end());
     var result = parser.parse('''
       type Test2 implements Test {
@@ -17,25 +17,27 @@ void main() {
     expect(result.isSuccess, true);
 
     result = parser.parse('''
-      type Test2  {
+      type Test3  {
         name: String!
         test: Boolean
-        next: Test2
+        next: Test3
       }
     ''');
     expect(result.isSuccess, true);
 
     result = parser.parse('''
-      type Test2 @test(if: true) {
+      type Test4 @test(if: true) {
         name: String!
         test(test: Int!): [Boolean!]!
-        next: [Test2!]
+        next: [Test4!]
       }
     ''');
     expect(result.isSuccess, true);
   });
 
   test("Type test with arguments", () {
+    final GraphQlGrammar g = GraphQlGrammar();
+
     var parser = g.build(start: () => g.typeDefinition().end());
     var result = parser.parse('''
       type Test2 implements Test {

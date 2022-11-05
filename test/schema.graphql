@@ -1,0 +1,691 @@
+scalar Long
+
+
+union Test = AdminLoginResult|Admin
+
+type AdminLoginResult implements LoginResult{
+  token: String!
+  user: Admin!
+}
+
+
+type AgentLoginResult implements LoginResult{
+  token: String!
+  user: Agent!
+
+}
+
+interface LoginResult {
+  token: String!
+}
+
+input LoginObject {
+  username: String!
+  password: String!
+}
+
+type BasicUserInfo {
+  firstName: String!
+  lastName: String!
+  dateOfBirth: Long!
+}
+
+type Email {
+  email: String!
+  verified: Boolean!
+}
+
+type PhoneNumber {
+  region: String!
+  regionCode: Int!
+  national: String!
+  international: String!
+}
+
+type Investigation implements BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String!
+  regionId: String!
+  agentId: [Agent!]!
+  productInfo: [ProductInfo!]!
+}
+
+type ProductInfo implements BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+
+  brand: Brand!
+  agent: Agent!
+  productName: String!
+  wholeSalePrice: Float!
+  price: Float!
+
+}
+
+input ProductInfoInput {
+  id: String!
+  brandId: String!
+  productName: String!
+  wholeSalePrice: Float!
+  price: Float!
+}
+
+##address
+
+type Commune {
+  name: String!
+  nameAr: String!
+}
+
+type Daira {
+  name: String!
+  nameAr: String!
+  communes: [Commune]!
+}
+
+type Wilaya {
+  id: Int!
+  name: String!
+  nameAr: String!
+  dairas: [Daira]!
+}
+
+type GeoPoint {
+  lat: Float!
+  lng: Float!
+}
+
+type Address {
+  street: String!
+  zipcode: String
+  wilaya: Wilaya!
+  daira: Daira!
+  commune: Commune!
+  geoPoint: GeoPoint!
+}
+
+
+
+
+type Brand implements BasicEntity{
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String
+  color: Long!
+}
+
+type Customer implements BasicEntity{
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String!
+  address: Address!
+  customerType: CustomerType!
+  storeType: StoreType!
+  contactName: String!
+  phoneNumber: String
+  open: Time!
+  close: Time!
+
+  # last gifts
+
+  lastGifts: [GiftDonation!]!
+  lastVisitDate: Long!
+
+}
+
+type GiftDonation {
+  gifts: [Gift!]!
+  date: Long!
+}
+
+type Time {
+  hour: Int!
+  minute: Int!
+}
+
+type MarketingOperation implements BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+
+  agent: Agent
+  customer: Customer!
+
+  availableProducts: [Product!]!
+  availableCompetitorProductTypes: [CompetitorProductType!]!
+  spaces: [AdvertisingSpace!]!
+  gifts: [Gift!]!
+  notes: String
+  rates: [Rate!]!
+  rate: Float!
+}
+
+type CompetitorProductType {
+  brand: Brand!
+  productType: ProductType!
+}
+
+type ProductPrice {
+  product: Product!
+  brand: Brand!
+  price: Float!
+}
+
+type Product implements BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String!
+  productType: ProductType!
+}
+
+type ProductType implements BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String!
+}
+
+enum CustomerType {
+  WHOLE_SALER, RETAILER
+}
+
+enum StoreType {
+  ELECTRICITY, HARDWARE
+}
+
+# interfaces
+enum Role {
+  AGENT,  ADMIN
+}
+
+interface BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+}
+
+type Agent implements BasicUser & BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  email: Email
+  phoneNumber: PhoneNumber
+  basicUserInfo: BasicUserInfo!
+  username: String!
+  roles: [Role!]!
+  region: Region!
+}
+
+type Admin implements BasicUser & BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+
+  email: Email
+  phoneNumber: PhoneNumber
+  basicUserInfo: BasicUserInfo
+  username: String!
+  roles: [Role]!
+}
+
+interface BasicUser implements BasicEntity {
+
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+
+  email: Email
+  phoneNumber: PhoneNumber
+  basicUserInfo: BasicUserInfo
+  username: String!
+  roles: [Role]!
+}
+
+
+type AdType implements BasicEntity{
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String!
+}
+
+type AdvertisingSpace {
+  imageUrl: String
+  width: Float!
+  height: Float!
+  adType: AdType!
+}
+
+type Gift implements BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String!
+}
+
+type Region implements BasicEntity {
+  id: ID!
+  creationDate: Long!
+  lastUpdate: Long!
+  name: String!
+  subRegions: [SubRegions!]!
+}
+
+type SubRegions {
+  id: Int!
+  name: String!
+  nameAr: String!
+}
+
+#####################
+######## Queries ####
+
+type Query {
+  agents(info: Page!): [Agent]!
+  agentCount: Long!
+  agent(id: String!): Agent
+  """
+  This is a comment
+
+  """
+  ######
+  wilayas: [Wilaya]!
+  dairas(wilayaId: Int!): [Daira]
+  communes(wilayaId: Int!, daira: String!): [Commune]!
+  #####
+
+  products(info: Page!): [Product!]!
+
+  productsAll: [Product!]!
+  productsCount: Long!
+  product(id: String!): Product
+
+  brands(info: Page!): [Brand]!
+  brandsAll: [Brand]!
+  brandsCount: Long!
+  brand(id: String): Brand
+
+  productTypes(info: Page!): [ProductType!]!
+  productTypesAll: [ProductType!]!
+  productTypesCount: Long!
+  productType(id: String!): ProductType
+
+  customers(info: Page!): [Customer]!
+  customersAll(info: Page!): [Customer]!
+  customersAllCount: Long!
+
+  customersByRange(info: Page!, rangeFilter: RangeFilter!): [Customer]!
+  customersByRangeCount(rangeFilter: RangeFilter!): Long!
+
+  customersByAddress(info: Page!, addressFilter: AddressFilter!): [Customer]!
+  customersByAddressCount( addressFilter: AddressFilter!): Long!
+
+  customersByType(info: Page!, customerType: CustomerType, storeType: StoreType): [Customer!]!
+  customersByTypeCount(customerType: CustomerType, storeType: StoreType): Long!
+  customer(id: String): Customer
+  customersCount: Long!
+
+
+
+  marketingOperations(info: Page!): [MarketingOperation]!
+  marketingOperationsAll(info: Page!): [MarketingOperation]!
+  marketingOperationsAllCount: Long!
+  marketingOperation(id: String!): MarketingOperation
+  marketingOperationsCount: Long!
+
+
+  giftsAll: [Gift!]!
+  gift(id: String!): Gift
+  adTypesAll: [AdType!]!
+  adType(id: String!): AdType
+  advertisingSpacesAll: [AdvertisingSpace!]!
+  advertisingSpace(id: String!): AdvertisingSpace
+  regions: [Region!]!
+  region(id: String!): Region
+
+  customerByTypeReportAll: CustomerByTypeReport!
+
+  customersByCommune(id: Int!): [CustomerByCommuneCount!]!
+  customersByWilaya: [CustomerByWilayaCount!]!
+
+  ### investigations
+
+  productInfos(pageInfo: Page!): [ProductInfo]!
+
+  productInfosAll: [ProductInfo]!
+
+  productInfo(id: String!): ProductInfo
+
+  productInfosCount: Int!
+
+
+
+}
+
+
+
+
+#####################
+######## Mutations ####
+
+type Mutation {
+  loginAsAdmin(object: LoginObject!): AdminLoginResult
+  loginAsAgent(object: LoginObject): AgentLoginResult
+  adminIdLogin(username: String!): AdminLoginResult
+  agentIdLogin(username: String!): AgentLoginResult
+
+  addAgent(agent: AgentInput!): Agent!
+  deleteAgent(id: String!) : Boolean!
+  deleteAgentsByIds(ids: [String!]!) : Boolean!
+
+
+  addBrand(_input: BrandInput!): Brand!
+  deleteBrand(id: String!) : Boolean!
+  deleteBrandsByIds(ids: [String!]!) : Boolean!
+
+
+  addProductType(_input: ProductTypeInput!, ): ProductType!
+  deleteProductType(id: String!) : Boolean!
+  deleteProductTypesByIds(ids: [String!]!) : Boolean!
+
+
+  updatePassword(passwords: Passwords!): Boolean!
+
+  addProduct(_input: ProductInput!): Product!
+  addProductsAll(_input: [ProductInput!]!): [Product!]!
+  deleteProduct(id: String!) : Boolean!
+  deleteProductsByIds(ids: [String!]!) : Boolean!
+
+
+  addCustomer(_input: CustomerInput!): Customer!
+  addCustomersAll(_input: [CustomerInput!]!): [Customer!]!
+  deleteCustomer(id: String!) : Boolean!
+  deleteCustomersByIds(ids: [String!]!) : Boolean!
+
+  addAdType(_input: AdTypeInput!): AdType!
+  deleteAdType(id: String!) : Boolean!
+  deleteAdTypesByIds(ids: [String!]!) : Boolean!
+
+  #################
+
+  addGift(_input: GiftInput!): Gift!
+  deleteGift(id: String!) : Boolean!
+  deleteGiftsByIds(ids: [String!]!) : Boolean!
+
+  #################
+
+  addRegion(_input: RegionInput! ): Region!
+  deleteRegion(id: String!) : Boolean!
+  deleteRegionsByIds(ids: [String!]!) : Boolean!
+
+
+  addMarketingOperation(_input: MarketingOperationInput!): MarketingOperation!
+  addMarketingOperationsAll(_input: [MarketingOperationInput]!): [MarketingOperation!]!
+  deleteMarketingOperation(id: String!): Boolean!
+  deleteMarketingOperationsByIds(ids: [String!]!): Boolean!
+
+
+  ########### REPORTS ###############
+
+  customerByTypeReport(_input: CustomerByTypeReportInput): CustomerByTypeReport!
+
+  productCountReport(filter: OperationFilter): [ProductCount!]!
+  productTypeCountReport(filter: TypeFilter): [ProductTypeCount!]!
+
+
+  productCountReportCount(filter: OperationFilter): Long!
+  productTypeCountReportCount(filter: TypeFilter): Long!
+
+
+  #### profile ####
+
+  updateAgentPassword(passwords: Passwords!): Agent!
+  updateAdminPassword(passwords: Passwords!): Admin!
+  resetAgentPassword(agentId: String!, password: String!): Agent!
+
+  addProductInfo(_input: ProductInfoInput!): ProductInfo!
+  deleteProductInfo(id: String!): Boolean!
+  deleteProductInfosByIds(ids: [String!]!): Boolean!
+
+}
+
+type CustomerByTypeReport {
+  electricityRetailerCount: Int!
+  hardwareRetailerCount: Int!
+  electricityWholeSalerCount: Int!
+  hardwareWholeSalerCount: Int!
+
+  hardwareCount: Int!
+  electricityCount: Int!
+  retailerCount: Int!
+  wholeSalerCount: Int!
+}
+
+type Rate {
+  rateName: String!
+  rate: Float!
+}
+
+type ProductCount {
+  product: Product!
+  count: Int!
+}
+
+type ProductTypeCount {
+  brand: Brand!
+  count: Int!
+}
+
+type CustomerByCommuneCount {
+  wilaya: Wilaya!
+  commune: Commune!
+  count: Int!
+}
+
+type CustomerByWilayaCount {
+  wilaya: Wilaya!
+  count: Int!
+}
+
+
+
+####################
+#####   inputs   ###
+
+input ProductPriceInput {
+  productId: String!
+  brandId: String!
+  price: Float!
+}
+
+input RangeFilter {
+  range: Float!
+  center: GeoPointInput!
+  customerType: CustomerType
+  storeType: StoreType
+}
+
+input AddressFilter {
+  wilayaId: Int
+  daira: String
+  commune: String
+  customerType: CustomerType
+  storeType: StoreType
+}
+
+input Page {
+  index: Int!
+  size: Int!
+}
+
+input AgentInput {
+  id: String
+  username: String!
+  password: String!
+  firstName: String!
+  lastName: String!
+  regionId: String!
+}
+input BrandInput {
+  id: String
+  name: String!
+  color: Long!
+}
+input MarketingOperationInput {
+  customerId: String!
+  giftIds: [String!]!
+  availableProducts: [String!]!
+  competitorProductTypes: [CompetitorProductTypeInput]!
+  spaces: [AdvertisingSpaceInput!]!
+  notes: String
+  rates: [RateInput!]!,
+  id: ID
+}
+
+
+input RateInput {
+  rateName: String!
+  rate: Float!
+}
+
+input ProductInput {
+  id: String
+  name: String!
+  typeId: String!
+}
+
+input ProductTypeInput {
+  id: String
+  name: String!
+}
+
+input AdTypeInput {
+  id: String
+  name: String!
+}
+
+input GiftInput {
+  id: String
+  name: String!
+}
+
+
+input AdvertisingSpaceInput {
+  id: String
+  height: Float!
+  width: Float!
+  imageUrl: String
+  typeId: String!
+}
+
+input Passwords {
+  oldValue: String!
+  newValue: String!
+}
+
+input CustomerInput {
+  id: String
+  name: String!
+  contactName: String!
+  phoneNumber: String!
+  address: AddressInput!
+  customerType: CustomerType!
+  storeType: StoreType!
+  open: TimeInput!
+  close: TimeInput!
+}
+
+input TimeInput {
+  hour: Int!
+  minute: Int!
+}
+
+input AddressInput {
+  street: String!
+  zipcode: String
+  daira: NamedInput!
+  commune: NamedInput!
+  wilaya: WilayaInput!
+  geoPoint: GeoPointInput!
+}
+
+input WilayaInput {
+  id: Int!
+  name: String
+  nameAr: String
+}
+
+input NamedInput {
+  name: String
+  nameAr: String
+}
+
+input GeoPointInput {
+  lat: Float!
+  lng: Float!
+}
+
+input RegionInput {
+  id: String
+  name: String
+  subRegions: [SubRegionInput!]!
+}
+
+input SubRegionInput {
+  id: Int!
+  name: String!
+  nameAr: String!
+}
+
+input CompetitorProductTypeInput {
+  brandId: String!
+  productTypeId: String!
+}
+
+input RegionFilter {
+  regionId: String
+  wilayaIds: [Int!]
+}
+
+input GeoPointFilter {
+  geoPoint: GeoPointInput!
+  range: Float!
+}
+
+input OperationFilter {
+  types: [String!]
+  customerType: CustomerType
+  storeType: StoreType
+  regionFilter: RegionFilter
+  geoPointFilter: GeoPointFilter
+  startDate: Long
+}
+
+input TypeFilter {
+  typeId: String!
+  customerType: CustomerType
+  storeType: StoreType
+  regionFilter: RegionFilter
+  geoPointFilter: GeoPointFilter
+  startDate: Long
+}
+
+input CustomerByTypeReportInput{
+  wilayaId: Int!
+  commune: String
+  daira: String
+}
+
+fragment beFrag on BasicEntity {
+  id, creationDate, lastUpdate
+}
+
+fragment userFrag on Product {
+  name nameAr ...beFrag
+}

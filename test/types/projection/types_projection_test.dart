@@ -32,6 +32,5 @@ void main() {
     final user = g.defineTypeWithFragment(
         g.getType("User"), g.getFragment("UserFragment"));
     expect(user.fieldNames, isNot(contains("lastName")));
-    
   });
 }

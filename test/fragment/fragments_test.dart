@@ -7,13 +7,23 @@ import 'package:petitparser/petitparser.dart';
 final GraphQlGrammar g = GraphQlGrammar();
 
 void main() async {
-  late final text;
+  group("bms grammar", () {
+    test("bms geammar fragment dependecy", () {
+      final _text = File("test/schema.graphql").readAsStringSync();
 
-  setUp(() {
-    text = File("test/fragment/fragments.graphql").readAsStringSync();
+      final GraphQlGrammar g = GraphQlGrammar();
+      var parser = g.build(start: () => g.fullGrammar().end());
+      var parsed = parser.parse(_text);
+
+      expect(parsed.isSuccess, true);
+      var frag = g.fragments["userFrag"]!;
+      expect(frag.dependecies.map((e) => e.name), contains("beFrag"));
+      print("frag = ${frag.toString()}");
+    });
   });
   group("Fragment tests", () {
     test("Fragments test", () async {
+      final text = File("test/fragment/fragments.graphql").readAsStringSync();
       final GraphQlGrammar g = GraphQlGrammar();
       var parser = g.build(start: () => g.fullGrammar().end());
 

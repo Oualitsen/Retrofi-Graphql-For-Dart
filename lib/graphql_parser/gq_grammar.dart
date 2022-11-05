@@ -458,14 +458,17 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<Set<String>> interfaceList() {
-    Set<String> interfaceList = <String>{};
-    return (identifier().map((value) => interfaceList.add(value)) &
+    late Set<String> interfaceList;
+    return (identifier().map((value) {
+              interfaceList = {value};
+            }) &
             (ref1(token, "&") &
                     identifier().map((value) {
                       final added = interfaceList.add(value);
                       if (!added) {
                         throw ParseException(
-                            "interface $value has been implemented more than once");
+                          "interface $value has been implemented more than once",
+                        );
                       }
                     }))
                 .star())
