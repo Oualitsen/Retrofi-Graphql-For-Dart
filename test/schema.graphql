@@ -687,5 +687,6 @@ fragment beFrag on BasicEntity {
 }
 
 fragment userFrag on Product {
-  name nameAr ...beFrag
+  name 
 }
+

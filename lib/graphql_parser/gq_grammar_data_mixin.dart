@@ -5,6 +5,7 @@ import 'package:parser/graphql_parser/model/gq_enum_definition.dart';
 import 'package:parser/graphql_parser/model/gq_fragment.dart';
 import 'package:parser/graphql_parser/model/gq_input_type.dart';
 import 'package:parser/graphql_parser/model/gq_interface.dart';
+import 'package:parser/graphql_parser/model/gq_token.dart';
 import 'package:parser/graphql_parser/model/gq_union.dart';
 import 'package:parser/graphql_parser/model/gq_queries.dart';
 
@@ -27,6 +28,8 @@ mixin GrammarDataMixin {
   final Map<String, GQDefinition> mutations = {};
   final Map<String, GQDefinition> subscriptions = {};
   final Map<String, GQEnumDefinition> enums = {};
+
+  final Map<String, GQTypeDefinition> projectedTypes = {};
 
   GQSchema schema = GQSchema();
   bool schemaInitialized = false;
@@ -175,7 +178,7 @@ mixin GrammarDataMixin {
 
   GQField applyProjection(GQField field, GQProjection projection) {
     final String fieldName = projection.alias ?? field.name;
-    if (projection.isFragment) {}
+    if (projection.isFragmentReference) {}
     return GQField(
       name: fieldName,
       type: field.type,
@@ -211,5 +214,92 @@ mixin GrammarDataMixin {
     /**
      * @TODO
      */
+  }
+
+  void fillProjectedTypes() {
+    print("filling projected types");
+    fragments.forEach((key, fragment) {
+      createProjectedType(fragment.onTypeName, fragment.name, fragment.block);
+    });
+  }
+
+  GQTypeDefinition createProjectedType(
+      String typeName, String? fragmentName, GQFragmentBlockDefinition block) {
+    final type = getTypeOrInterfaceDefinition(typeName);
+
+    if (type == null) {
+      throw ParseException("Type or interface $typeName is not defined");
+    }
+
+    final newName = "${type.name}_${fragmentName ?? ''}";
+
+    if (types[newName] != null) {
+      //already defined
+      return types[newName]!;
+    }
+
+    ///
+    ///Let's create a new type based on the type name
+    ///
+    List<GQField> fields = [];
+    final newType =
+        GQTypeDefinition(name: newName, fields: fields, interfaceNames: {});
+    print("new type name = ${newType.name}");
+
+    ///
+    ///let's get the fields
+    ///
+    print("_________________ $typeName");
+    block.projections.forEach((key, value) {
+      print("projection = $value key = ${key}");
+      fields.addAll(createFragmentField(type, value));
+    });
+    addTypeDefinition(newType);
+    return newType;
+  }
+
+  List<GQField> createFragmentField(
+      GQTokenWithFields type, GQProjection projection) {
+    print("projection name = ${projection.actualName}");
+
+    if (projection is GQInlineFragmentDefinition) {
+      print("handle inline fragment definition");
+
+      final _type = createProjectedType(
+          projection.typeName, projection.name, projection.block);
+      print("_type = ${_type.name} has been created ...${projection.name}");
+      return [];
+    }
+
+    if (projection.isFragmentReference) {
+      //this is a fragment reference ...
+
+      var result = <GQField>[];
+      final frag = getFragment(projection.name);
+      frag.block.projections.forEach((key, value) {
+        result.addAll(createFragmentField(type, value));
+      });
+      return result;
+    }
+    if (projection.block != null) {
+      // do something else here
+      print("#####################  ");
+    }
+    var list = type.fields.where((element) => element.name == projection.name);
+
+    if (list.isEmpty) {
+      throw ParseException(
+          "${type.name} does not define a field with name ${projection.name}");
+    }
+    final _field = list.first;
+    final result = GQField(
+        name: projection.actualName,
+        type: _field.type,
+        arguments: _field.arguments);
+    return [result];
+  }
+
+  GQTokenWithFields? getTypeOrInterfaceDefinition(String name) {
+    return types[name] ?? interfaces[name];
   }
 }

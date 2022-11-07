@@ -60,7 +60,7 @@ class GQDefinition extends GQTokenWithDirectives {
 
 class GQQueryElement extends GQTokenWithDirectives {
   final List<GQDirectiveValue> list;
-  final GQFragmentBlock? block;
+  final GQFragmentBlockDefinition? block;
   final List<GQArgumentValue> arguments;
 
   GQQueryElement(String name, this.list, this.block, this.arguments)

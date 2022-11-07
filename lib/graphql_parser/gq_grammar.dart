@@ -57,6 +57,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
     updateFragmentDependencies();
     updateInterfaceParents();
     updateDirectives();
+    fillProjectedTypes();
   }
 
   void updateInterfaceParents() {
@@ -545,7 +546,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
     late String name;
     String? alias;
     List<GQDirectiveValue>? directives;
-    GQFragmentBlock? block;
+    GQFragmentBlockDefinition? block;
 
     return (ref1(
                 token,
@@ -566,7 +567,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
           name: name,
           alias: alias,
           block: block,
-          isFragment: false,
+          isFragmentReference: false,
           directiveList: directives ?? []);
     });
   }
@@ -580,14 +581,14 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
         .map((value) => GQProjection(
             name: name,
             alias: null,
-            isFragment: true,
+            isFragmentReference: true,
             block: null,
             directiveList: directives ?? []));
   }
 
   Parser<GQProjection> inlineFragment() {
     late String name;
-    late GQFragmentBlock block;
+    late GQFragmentBlockDefinition block;
     late List<GQDirectiveValue> directiveValues;
     return (ref1(token, "...") &
             ref1(token, "on") &
@@ -608,7 +609,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   Parser<GQFragmentDefinition> fragmentDefinition() {
     late String name;
     late String onTypeName;
-    late GQFragmentBlock block;
+    late GQFragmentBlockDefinition block;
 
     List<GQDirectiveValue>? directives;
 
@@ -642,12 +643,12 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
     });
   }
 
-  Parser<GQFragmentBlock> fragmentBlock() {
+  Parser<GQFragmentBlockDefinition> fragmentBlock() {
     late List<GQProjection> fields;
     return (openBrace() &
             ref0(fragmentFields).map((value) => fields = value) &
             closeBrace())
-        .map((value) => GQFragmentBlock(fields));
+        .map((value) => GQFragmentBlockDefinition(fields));
   }
 
   Parser<int> _plainInt() => pattern("0-9").plus().flatten().map(int.parse);
@@ -689,7 +690,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
     late String name;
     List<GQArgumentValue>? argValues;
     List<GQDirectiveValue>? directives;
-    GQFragmentBlock? block;
+    GQFragmentBlockDefinition? block;
 
     return (identifier().map((value) => name = value) &
             argumentValues().optional().map((value) => argValues = value) &

@@ -7,7 +7,7 @@ class GQFragmentDefinition extends GQTokenWithDirectives {
   /// can be an interface or a type
   final String onTypeName;
 
-  final GQFragmentBlock block;
+  final GQFragmentBlockDefinition block;
   final List<GQDirectiveValue> directiveList;
 
   final Set<GQFragmentDefinition> dependecies = {};
@@ -35,8 +35,9 @@ class GQFragmentDefinition extends GQTokenWithDirectives {
   void updateDepencies(Map<String, GQFragmentDefinition> map) {
     final Set<String> dependecyNames = block.getDependecies(map);
     for (var name in dependecyNames) {
-      var def = map[name];
+      final def = map[name];
       if (def == null) {
+        print("Fragment is not defined");
         throw ParseException("Fragment $name is not defined");
       }
       dependecies.add(def);
@@ -50,7 +51,7 @@ class GQProjection extends GQTokenWithDirectives {
   ///
   ///  something like  ... fragmentName
   ///
-  final bool isFragment;
+  final bool isFragmentReference;
 
   ///
   ///  something like
@@ -59,14 +60,14 @@ class GQProjection extends GQTokenWithDirectives {
   ///  }
   ///
 
-  final GQFragmentBlock? block;
+  final GQFragmentBlockDefinition? block;
 
   final List<GQDirectiveValue> directiveList;
 
   GQProjection({
     required String name,
     required this.alias,
-    required this.isFragment,
+    required this.isFragmentReference,
     required this.block,
     required this.directiveList,
   }) : super(name);
@@ -89,7 +90,7 @@ class GQProjection extends GQTokenWithDirectives {
   @override
   String serialize() {
     String result = "";
-    if (isFragment) {
+    if (isFragmentReference) {
       result = "... ";
     }
     if (alias != null) {
@@ -107,8 +108,8 @@ class GQProjection extends GQTokenWithDirectives {
 
   Set<String> getDependecies(Map<String, GQFragmentDefinition> map) {
     final result = <String>{};
-    if (isFragment) {
-      if (name.isNotEmpty) {
+    if (isFragmentReference) {
+      if (block == null) {
         result.add(name);
 
         var frag = map[name];
@@ -143,24 +144,27 @@ class GQProjection extends GQTokenWithDirectives {
 
 class GQInlineFragmentDefinition extends GQProjection {
   final String typeName;
-  GQInlineFragmentDefinition(
-      this.typeName, GQFragmentBlock block, List<GQDirectiveValue> directives)
+  GQInlineFragmentDefinition(this.typeName, GQFragmentBlockDefinition block,
+      List<GQDirectiveValue> directives)
       : super(
           name: "",
-          isFragment: true,
+          isFragmentReference: true,
           block: block,
           alias: null,
           directiveList: directives,
         );
 
   @override
-  get name => "${typeName}_${block!.uniqueName}";
+  String get name => "${typeName}_${block.uniqueName}";
+
+  @override
+  GQFragmentBlockDefinition get block => super.block!;
 }
 
-class GQFragmentBlock extends GQToken {
+class GQFragmentBlockDefinition {
   final Map<String, GQProjection> projections = {};
 
-  GQFragmentBlock(List<GQProjection> projections) : super("") {
+  GQFragmentBlockDefinition(List<GQProjection> projections) {
     for (var element in projections) {
       this.projections[element.name] = element;
     }
@@ -169,13 +173,11 @@ class GQFragmentBlock extends GQToken {
   GQProjection getProjection(String name) {
     final p = projections[name];
     if (p == null) {
-      throw ParseException(
-          "Projection $name was not found on Fragment ${this.name}");
+      throw ParseException("Could not find projection with name is $name");
     }
     return p;
   }
 
-  @override
   String serialize() {
     return """{
       ${serializeList(projections.values.toList(), join: " ", withParenthesis: false)}
