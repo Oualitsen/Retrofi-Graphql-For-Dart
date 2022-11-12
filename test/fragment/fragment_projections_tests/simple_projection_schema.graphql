@@ -1,0 +1,11 @@
+
+type Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: int!
+}
+
+fragment PersonFragment on Person {
+    firstName lastName middleName
+}

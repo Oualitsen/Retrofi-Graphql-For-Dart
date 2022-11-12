@@ -1,0 +1,31 @@
+type Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int!
+    address: Address
+    car: Car
+}
+
+type Address {
+    street: String!
+    city: String
+    state: String
+    zipCode: String
+}
+
+type Car {
+    mark: String!
+    model: String!
+    year: Int!
+}
+
+fragment PersonAddressOnlyFragment on Person {
+    address {
+        ... AddressStreetOnlyFragment
+    }
+}
+
+fragment AddressStreetOnlyFragment on Address {
+    street
+}

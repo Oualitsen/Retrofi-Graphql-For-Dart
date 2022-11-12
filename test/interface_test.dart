@@ -25,4 +25,21 @@ void main() {
     ''');
     expect(result.isSuccess, true);
   });
+
+  test("Interface  list test", () {
+    var parser = g.build(start: () => g.interfaceList().end());
+    var result = parser.parse('''
+       BasicEntity  
+    ''');
+    expect(result.isSuccess, true);
+  });
+
+  test("Interface  list test multiple", () {
+    var parser = g.build(start: () => g.interfaceList().end());
+    var result = parser.parse('''
+       BasicEntity & UserBase & UserBase2 
+    ''');
+    expect(result.value.length, 3);
+    expect(result.isSuccess, true);
+  });
 }

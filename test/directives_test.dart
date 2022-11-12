@@ -16,6 +16,9 @@ void main() {
       @skip(if: [1 2, {name:"ramdane", age: 33}])
     ''');
     expect(result.isSuccess, true);
+
+    result = parser.parse('''@azul''');
+    expect(result.isSuccess, true);
   });
 
   test("Directive scopes test", () {
