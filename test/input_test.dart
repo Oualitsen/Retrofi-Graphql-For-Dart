@@ -7,7 +7,7 @@ void main() {
   test("Input  test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.inputDefinition().end());
+    var parser = g.buildFrom(g.inputDefinition().end());
     var result = parser.parse('''
       input Test {
         "Sample documentation"

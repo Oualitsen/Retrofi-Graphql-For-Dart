@@ -38,6 +38,6 @@ class GQDirectiveValue extends GQToken {
 
   @override
   String serialize() {
-    return "$name ${arguments.isEmpty ? '' : (arguments.map((e) => e.serialize()).join(", "))}";
+    return "$token ${arguments.isEmpty ? '' : (arguments.map((e) => e.serialize()).join(", "))}";
   }
 }

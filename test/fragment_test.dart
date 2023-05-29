@@ -7,37 +7,37 @@ void main() {
   test("Fragment field test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.plainFragmentField().end());
+    var parser = g.buildFrom(g.plainFragmentField().end());
     var result = parser.parse('''
       
       name
     
     ''');
     expect(result.isSuccess, true);
-    var value = result.value as GQProjection;
-    expect(value.name, "name");
+    GQProjection value = result.value;
+    expect(value.token, "name");
     expect(value.alias, null);
   });
 
   test("Fragment field with alias test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.plainFragmentField().end());
+    var parser = g.buildFrom(g.plainFragmentField().end());
     var result = parser.parse('''
       
       alias: name
     
     ''');
     expect(result.isSuccess, true);
-    var value = result.value as GQProjection;
-    expect(value.name, "name");
+    var value = result.value;
+    expect(value.token, "name");
     expect(value.alias, "alias");
   });
 
   test("Fragment field with alias test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.plainFragmentField().end());
+    var parser = g.buildFrom(g.plainFragmentField().end());
     var result = parser.parse('''
       
       alias: name {
@@ -46,8 +46,8 @@ void main() {
     
     ''');
     expect(result.isSuccess, true);
-    var value = result.value as GQProjection;
-    expect(value.name, "name");
+    var value = result.value;
+    expect(value.token, "name");
     expect(value.alias, "alias");
     expect(value.block == null, false);
   });
@@ -55,21 +55,23 @@ void main() {
   test("inline Fragment ", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.inlineFragment().end());
+    var parser = g.buildFrom(g.inlineFragment().end());
     var result = parser.parse('''
        ... on BasicEntity {
         id lastUpdate
        }
       
+     
     
     ''');
+    print("resul.value = ${result.value}"); // result.value
     expect(result.isSuccess, true);
   });
 
   test("Fragment Value", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.fragmentNameValue().end());
+    var parser = g.buildFrom(g.fragmentNameValue().end());
     var result = parser.parse('''
        ... fragmentName
     ''');
@@ -79,7 +81,7 @@ void main() {
   test("Inline fragment or fragment value", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.fragmentValue().end());
+    var parser = g.buildFrom(g.fragmentValue().end());
     var result = parser.parse('''
        ... fragmentName
     ''');
@@ -93,13 +95,12 @@ void main() {
       
     ''');
     expect(result.isSuccess, true);
-    print("type = ${result.value.runtimeType}");
   });
 
   test("fragmentField test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.fragmentField().end());
+    var parser = g.buildFrom(g.fragmentField().end());
     var result = parser.parse('''
        ... fragmentName
     ''');
@@ -125,7 +126,7 @@ void main() {
   test("Fragment Definitions", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.fragmentDefinition().end());
+    var parser = g.buildFrom(g.fragmentDefinition().end());
     var result = parser.parse('''
        fragment productFields  on Product @skip(if: true) @include(if: false) {
           id @skip(if: true)  name {
@@ -139,12 +140,11 @@ void main() {
       }
     ''');
     expect(result.isSuccess, true);
-    print(result.value);
   });
 
   test("Fragment Definitions", () {
     final GraphQlGrammar g = GraphQlGrammar();
-    var parser = g.build(start: () => g.fragmentDefinition().end());
+    var parser = g.buildFrom(g.fragmentDefinition().end());
     var result = parser.parse('''
        fragment ProductFields  on Product {
           myAliassedId:id  name 
@@ -160,7 +160,7 @@ void main() {
   test("plainFragmentField List Test", () {
     //plainFragmentField()
     final GraphQlGrammar g = GraphQlGrammar();
-    var parser = g.build(start: () => g.plainFragmentField().plus().end());
+    var parser = g.buildFrom(g.plainFragmentField().plus().end());
     var result = parser.parse('''
           id  
           myAliassedName : FirstName 

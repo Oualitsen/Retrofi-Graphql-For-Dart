@@ -12,12 +12,12 @@ void main() async {
       final _text = File("test/schema.graphql").readAsStringSync();
 
       final GraphQlGrammar g = GraphQlGrammar();
-      var parser = g.build(start: () => g.fullGrammar().end());
+      var parser = g.buildFrom(g.fullGrammar().end());
       var parsed = parser.parse(_text);
 
       expect(parsed.isSuccess, true);
       var frag = g.fragments["userFrag"]!;
-      expect(frag.dependecies.map((e) => e.name), contains("beFrag"));
+      expect(frag.dependecies.map((e) => e.fragmentName), contains("beFrag"));
       print("frag = ${frag.toString()}");
     });
   });
@@ -25,7 +25,7 @@ void main() async {
     test("Fragments test", () async {
       final text = File("test/fragment/fragments.graphql").readAsStringSync();
       final GraphQlGrammar g = GraphQlGrammar();
-      var parser = g.build(start: () => g.fullGrammar().end());
+      var parser = g.buildFrom(g.fullGrammar().end());
 
       var parsed = parser.parse(text);
 
@@ -38,15 +38,15 @@ void main() async {
 
     test("Fragemnt Dependecies Test", () {
       final GraphQlGrammar g = GraphQlGrammar();
-      var parser = g.build(start: () => g.fullGrammar().end());
+      var parser = g.buildFrom(g.fullGrammar().end());
 
       var parsed = parser.parse(
           File("test/fragment/fragment_dependecy.graphql").readAsStringSync());
       expect(parsed.isSuccess, true);
 
       final frag = g.fragments["AddressFragment"]!;
-      expect(
-          frag.dependecies.map((e) => e.name), containsAll(["StateFragment"]));
+      expect(frag.dependecies.map((e) => e.fragmentName),
+          containsAll(["StateFragment"]));
       expect(g.fragments.length, greaterThanOrEqualTo(2));
     });
   });

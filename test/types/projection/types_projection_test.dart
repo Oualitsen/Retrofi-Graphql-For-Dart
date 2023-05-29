@@ -7,7 +7,7 @@ import 'package:petitparser/petitparser.dart';
 void main() {
   test("Types test", () {
     final GraphQlGrammar g = GraphQlGrammar();
-    var parser = g.build(start: () => g.fullGrammar().end());
+    var parser = g.buildFrom(g.fullGrammar().end());
 
     var parsed = parser.parse(File(
             "test/types/projection/types_projection_simple_case_schema.graphql")
@@ -22,7 +22,7 @@ void main() {
 
   test("Types test case 2", () {
     final GraphQlGrammar g = GraphQlGrammar();
-    var parser = g.build(start: () => g.fullGrammar().end());
+    var parser = g.buildFrom(g.fullGrammar().end());
 
     var parsed = parser.parse(File(
             "test/types/projection/types_projection_simple_case_schema.graphql")

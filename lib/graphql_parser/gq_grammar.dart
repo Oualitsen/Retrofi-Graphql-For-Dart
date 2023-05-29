@@ -88,21 +88,16 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<List<GQArgumentDefinition>> arguments({bool parametrized = false}) {
-    late List<GQArgumentDefinition> list;
-    return (openParen() &
-            oneArgumentDefinition(parametrized: parametrized)
-                .star()
-                .map((value) => list = value) &
+    return seq3(
+            openParen(),
+            oneArgumentDefinition(parametrized: parametrized).star(),
             closeParen())
-        .map((value) => list);
+        .map3((p0, argsDefinition, p2) => argsDefinition);
   }
 
   Parser<List<GQArgumentValue>> argumentValues() {
-    late List<GQArgumentValue> list;
-    return (openParen() &
-            oneArgumentValue().star().map((value) => list = value) &
-            closeParen())
-        .map((value) => list);
+    return seq3(openParen(), oneArgumentValue().star(), closeParen())
+        .map3((p0, argValues, p2) => argValues);
   }
 
   Parser<GQArgumentValue> oneArgumentValue() =>
@@ -126,27 +121,26 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   Parser colon() => ref1(token, char(":"));
 
   Parser<GQTypeDefinition> typeDefinition() {
-    late String name;
-    late Set<String> interfaceNames;
-    late List<GQField> fields;
-    return (ref1(token, "type") &
-            ref0(identifier).map((value) => name = value) &
-            implementsToken().optional().map((value) {
-              interfaceNames = value ?? <String>{};
-            }) &
-            directiveValueList() &
-            ref0(openBrace) &
-            fieldList(
-              required: true,
-              canBeInitialized: true,
-              acceptsArguments: true,
-            ).map((value) => fields = value) &
-            ref0(closeBrace))
-        .map((value) {
+    return seq4(
+            seq2(ref1(token, "type"), ref0(identifier))
+                .map2((_, identifier) => identifier),
+            implementsToken().optional(),
+            directiveValueList(),
+            seq3(
+              ref0(openBrace),
+              fieldList(
+                required: true,
+                canBeInitialized: true,
+                acceptsArguments: true,
+              ),
+              ref0(closeBrace),
+            ).map3((p0, fields, p2) => fields))
+        .map4((name, interfaceNames, directives, fields) {
       final type = GQTypeDefinition(
         name: name,
         fields: fields,
-        interfaceNames: interfaceNames,
+        interfaceNames: interfaceNames ?? {},
+        directives: directives,
       );
       addTypeDefinition(type);
       return type;
@@ -154,19 +148,19 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQInputDefinition> inputDefinition() {
-    late String name;
-    late List<GQField> fields;
-    return (ref1(token, "input") &
-            ref0(identifier).map((value) => name = value) &
-            directiveValueList() &
-            ref0(openBrace) &
-            fieldList(
-                    required: true,
-                    canBeInitialized: true,
-                    acceptsArguments: false)
-                .map((value) => fields = value) &
-            ref0(closeBrace))
-        .map((value) {
+    return seq4(
+            ref1(token, "input"),
+            ref0(identifier),
+            directiveValueList(),
+            seq3(
+                    ref0(openBrace),
+                    fieldList(
+                        required: true,
+                        canBeInitialized: true,
+                        acceptsArguments: false),
+                    ref0(closeBrace))
+                .map3((p0, fieldList, p2) => fieldList))
+        .map4((_, name, directives, fields) {
       final input = GQInputDefinition(name: name, fields: fields);
       addInputDefinition(input);
       return input;
@@ -175,32 +169,43 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
 
   Parser<GQField> field(
       {required bool canBeInitialized, required acceptsArguments}) {
-    late String name;
-    late GQType type;
-    String? _documentation;
-    List<GQArgumentDefinition>? _arguments;
-    Object? initialValue;
     return ([
-      ref0(documentation).optional().map((value) => _documentation = value),
-      identifier().map((value) {
-        name = value;
-        return value;
-      }),
-      if (acceptsArguments)
-        arguments().optional().map((value) => _arguments = value),
+      ref0(documentation).optional(),
+      identifier(),
+      if (acceptsArguments) arguments().optional(),
       colon(),
-      ref0(typeTokenDefinition).map((value) => type = value),
-      if (canBeInitialized)
-        initialization().optional().map((value) => initialValue = value),
+      ref0(typeTokenDefinition),
+      if (canBeInitialized) initialization().optional(),
       directiveValueList()
     ].toSequenceParser())
         .map((value) {
+      String name = value[1] as String;
+
+      String? fieldDocumentation = value[0] as String?;
+      List<GQArgumentDefinition>? fieldArguments;
+      Object? initialValue;
+
+      if (acceptsArguments) {
+        fieldArguments = value[2] as List<GQArgumentDefinition>?;
+      } else {
+        fieldArguments = null;
+      }
+
+      if (canBeInitialized) {
+        initialValue = value[acceptsArguments ? 4 : 5];
+      }
+
+      GQType type = value[acceptsArguments ? 4 : 3] as GQType;
+      List<GQDirectiveValue>? directives =
+          value.last as List<GQDirectiveValue>?;
+
       return GQField(
         name: name,
         type: type,
-        documentation: _documentation,
-        arguments: _arguments ?? [],
+        documentation: fieldDocumentation,
+        arguments: fieldArguments ?? [],
         initialValue: initialValue,
+        directives: directives,
       );
     });
   }
@@ -222,34 +227,26 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQInterfaceDefinition> interfaceDefinition() {
-    late String name;
-    late List<GQField> fields;
-    late Set<String> parentNames;
-    return (ref1(token, "interface") &
-            ref0(identifier).map((value) {
-              name = value;
-              return value;
-            }) &
-            implementsToken().optional().map((value) {
-              parentNames = value ?? <String>{};
-            }) &
-            directiveValueList() &
-            ref0(openBrace) &
-            fieldList(
-              required: true,
-              canBeInitialized: false,
-              acceptsArguments: false,
-            ).map((value) {
-              fields = value;
-              return value;
-            }) &
-            ref0(closeBrace))
-        .map((value) {
+    return seq4(
+            seq2(ref1(token, "interface"), ref0(identifier))
+                .map2((p0, interfaceName) => interfaceName),
+            implementsToken().optional(),
+            directiveValueList(),
+            seq3(
+                    ref0(openBrace),
+                    fieldList(
+                      required: true,
+                      canBeInitialized: false,
+                      acceptsArguments: false,
+                    ),
+                    ref0(closeBrace))
+                .map3((p0, fieldList, p2) => fieldList))
+        .map4((name, parentNames, directives, fieldList) {
       var interface = GQInterfaceDefinition(
-        name: name,
-        fields: fields,
-        parentNames: parentNames,
-      );
+          name: name,
+          fields: fieldList,
+          parentNames: parentNames ?? {},
+          directives: directives.toSet());
       addInterfaceDefinition(interface);
       return interface;
     });
@@ -363,13 +360,11 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
           .cast<GQType>();
 
   Parser<GQType> simpleTypeTokenDefinition() {
-    late String name;
-    bool nullable = true;
-    return (ref1(token, identifier().map((value) => name = value)) &
-            ref1(token, char("!")).optional().map((value) {
-              nullable = value == null;
-            }))
-        .map((value) {
+    return seq2(
+        ref1(token, identifier()),
+        ref1(token, char("!")).optional().map((value) {
+          return value == null;
+        })).map2((name, nullable) {
       return GQType(name, nullable, isScalar: false);
     });
   }
@@ -434,12 +429,9 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
 
   Parser newlineLexicalToken() => pattern('\n\r');
 
-  /// carry on from here
   Parser<Set<String>> implementsToken() {
-    late Set<String> set;
-    return (ref1(token, "implements") &
-            interfaceList().map((value) => set = value))
-        .map((_) => set);
+    return seq2(ref1(token, "implements"), interfaceList())
+        .map2((_, set) => set);
   }
 
   Parser<Set<String>> interfaceList() => (identifier() &
@@ -487,31 +479,24 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
       });
 
   Parser<GQSchema> schemaDefinition() {
-    late GQSchema schema;
-    return (ref1(token, "schema") &
-            openBrace() &
-            (schemaElement().repeat(0, 3))
-                .map(GQSchema.fromList)
-                .map((value) => schema = value) &
-            closeBrace())
-        .map((value) {
+    return seq4(ref1(token, "schema"), openBrace(),
+            schemaElement().repeat(0, 3).map(GQSchema.fromList), closeBrace())
+        .map4((p0, p1, schema, p3) {
       defineSchema(schema);
       return schema;
     });
   }
 
   Parser<String> schemaElement() {
-    late String ident;
-    late String tokenValue;
-    return (ref1(
-                    token,
-                    ["query", "mutation", "subscription"]
-                        .map((e) => e.toParser())
-                        .toChoiceParser())
-                .map((value) => tokenValue = value) &
-            colon() &
-            identifier().map((value) => ident = value))
-        .map((value) => "$tokenValue-$ident");
+    return seq3(
+            ref1(
+                token,
+                ["query", "mutation", "subscription"]
+                    .map((e) => e.toParser())
+                    .toChoiceParser()),
+            colon(),
+            identifier())
+        .map3((p0, p1, p2) => "$p0-$p2");
   }
 
   Parser<GQProjection> fragmentField() {
@@ -519,60 +504,48 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQProjection> plainFragmentField() {
-    late String name;
-    String? alias;
-    List<GQDirectiveValue>? directives;
-    GQFragmentBlockDefinition? block;
-
-    return (ref1(
-                token,
-                identifier().map((value) {
-                  alias = null;
-                  return name = value;
-                })) &
-            (colon() &
-                    identifier().map((value) {
-                      alias = name;
-                      name = value;
-                    }))
-                .optional() &
-            directiveValueList().map((value) => directives = value) &
-            ref0(fragmentBlock).optional().map((value) => block = value))
-        .map((value) {
-      return GQProjection(
-          name: name,
-          alias: alias,
-          block: block,
-          isFragmentReference: false,
-          directiveList: directives ?? []);
-    });
+    return seq4(
+            ref1(token, identifier()),
+            (seq2(colon(), identifier()).map2((_, alias) => alias)).optional(),
+            directiveValueList(),
+            ref0(() => fragmentBlock()).optional())
+        .map4((name, alias, directiveList, block) => GQProjection(
+              token: name,
+              onTypeName: null,
+              alias: alias,
+              isFragmentReference: false,
+              block: block,
+              directives: directiveList,
+            ));
   }
 
   Parser<GQProjection> fragmentNameValue() {
-    late String name;
-    List<GQDirectiveValue>? directives;
-    return (ref1(token, "...") &
-            identifier().map((value) => name = value) &
-            directiveValueList().map((value) => directives = value))
-        .map((value) => GQProjection(
-            name: name,
-            alias: null,
-            isFragmentReference: true,
-            block: null,
-            directiveList: directives ?? []));
+    return seq3(ref1(token, "..."), identifier(), directiveValueList()).map3(
+      (_, name, directives) => GQProjection(
+          onTypeName: null,
+          token: name,
+          alias: null,
+          isFragmentReference: true,
+          block: null,
+          directives: directives),
+    );
   }
 
   Parser<GQProjection> inlineFragment() {
-    late String name;
-    late GQFragmentBlockDefinition block;
-    late List<GQDirectiveValue> directiveValues;
-    return (ref1(token, "...") &
-            ref1(token, "on") &
-            identifier().map((value) => name = value) &
-            directiveValueList().map((value) => directiveValues = value) &
-            fragmentBlock().map((value) => block = value))
-        .map((value) =>
-            GQInlineFragmentDefinition(name, block, directiveValues));
+    return seq3(
+      ref1(token, "..."),
+      ref1(token, "on"),
+      seq3(identifier(), directiveValueList(), fragmentBlock()).map3(
+        (typeName, directives, block) => GQProjection(
+          token: '',
+          onTypeName: typeName,
+          alias: null,
+          isFragmentReference: false,
+          block: block,
+          directives: directives,
+        ),
+      ),
+    ).map3((p0, p1, projection) => projection);
   }
 
   Parser<GQProjection> fragmentValue() =>
@@ -583,36 +556,36 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQFragmentDefinition> fragmentDefinition() {
-    late String name;
-    late String onTypeName;
-    late GQFragmentBlockDefinition block;
-
-    List<GQDirectiveValue>? directives;
-
-    return (ref1(token, "fragment") &
-            identifier().map((value) => name = value) &
-            ref1(token, "on") &
-            identifier().map((value) => onTypeName = value) &
-            directiveValueList().map((value) => directives = value) &
-            fragmentBlock().map((value) => block = value))
-        .map((value) {
-      return GQFragmentDefinition(name, onTypeName, block, directives ?? []);
-    }).map((f) {
+    return seq4(
+            seq3(
+              ref1(token, "fragment"),
+              identifier(),
+              ref1(token, "on"),
+            ).map3((p0, p1, p2) => p1),
+            identifier(),
+            directiveValueList(),
+            fragmentBlock())
+        .map4((name, typeName, directiveValues, block) =>
+            GQFragmentDefinition(name, typeName, block, directiveValues))
+        .map((f) {
       addFragmentDefinition(f);
       return f;
     });
   }
 
   Parser<GQUnionDefinition> unionDefinition() {
-    late final String name;
-    final List<String> types = [];
-
-    return (ref1(token, "union") &
-            ref0(identifier).map((value) => name = value) &
-            ref1(token, "=") &
-            ref0(identifier).map(types.add) &
-            (ref1(token, "|") & ref0(identifier).map(types.add)).star())
-        .map((value) => GQUnionDefinition(name, types))
+    return seq3(
+            seq3(
+              ref1(token, "union"),
+              ref0(identifier),
+              ref1(token, "="),
+            ).map3((_, unionName, eq) => unionName),
+            ref0(identifier),
+            seq2(ref1(token, "|"), ref0(identifier))
+                .map2((p0, p1) => p1)
+                .star())
+        .map3(
+            (name, type1, types) => GQUnionDefinition(name, [type1, ...types]))
         .map((value) {
       addUnionDefinition(value);
       return value;
@@ -620,37 +593,31 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQFragmentBlockDefinition> fragmentBlock() {
-    late List<GQProjection> fields;
-    return (openBrace() &
-            ref0(fragmentFields).map((value) => fields = value) &
-            closeBrace())
-        .map((value) => GQFragmentBlockDefinition(fields));
+    return seq3(openBrace(), ref0(() => fragmentFields()), closeBrace()).map3(
+        (p0, projectionList, p2) => GQFragmentBlockDefinition(projectionList));
   }
 
   Parser<int> _plainInt() => pattern("0-9").plus().flatten().map(int.parse);
 
   Parser<GQDefinition> queryDefinition(GQQueryType type) {
-    late String name;
-    List<GQArgumentDefinition>? args;
-    late List<GQQueryElement> elements;
-    List<GQDirectiveValue>? directives;
-
-    return (ref1(token, type.name) &
-            identifier().map((value) => name = value) &
-            arguments(parametrized: true)
-                .optional()
-                .map((value) => args = value ?? []) &
-            directiveValueList().map((value) => directives = value) &
-            openBrace() &
-            (type == GQQueryType.subscription
-                    ? queryElement().map((value) => [value])
-                    : queryElement().plus())
-                .map((value) => elements = value) &
-            closeBrace())
-        .map(
-      (_) => GQDefinition(
+    return seq4(
+            seq2(
+              ref1(token, type.name),
+              identifier(),
+            ).map2((p0, identifier) => identifier),
+            arguments(parametrized: true).optional(),
+            directiveValueList(),
+            seq3(
+                    openBrace(),
+                    (type == GQQueryType.subscription
+                        ? queryElement().map((value) => [value])
+                        : queryElement().plus()),
+                    closeBrace())
+                .map3((p0, queryElements, p2) => queryElements))
+        .map4(
+      (name, args, directives, elements) => GQDefinition(
         name,
-        directives ?? [],
+        directives,
         args ?? [],
         elements,
         type,
@@ -663,16 +630,9 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQQueryElement> queryElement() {
-    late String name;
-    List<GQArgumentValue>? argValues;
-    List<GQDirectiveValue>? directives;
-    GQFragmentBlockDefinition? block;
-
-    return (identifier().map((value) => name = value) &
-            argumentValues().optional().map((value) => argValues = value) &
-            directiveValueList().map((value) => directives = value) &
-            fragmentBlock().optional().map((value) => block = value))
-        .map((_) =>
-            GQQueryElement(name, directives ?? [], block, argValues ?? []));
+    return seq4(identifier(), argumentValues().optional(), directiveValueList(),
+            fragmentBlock().optional())
+        .map4((name, args, directiveList, block) =>
+            GQQueryElement(name, directiveList, block, args ?? []));
   }
 }

@@ -6,7 +6,7 @@ final GraphQlGrammar g = GraphQlGrammar();
 
 void main() {
   test("Enum  test", () {
-    var parser = g.build(start: () => g.enumDefinition().end());
+    var parser = g.buildFrom(g.enumDefinition().end());
     var result = parser.parse('''
       
       enum Gender @sikp(if: true) {

@@ -6,19 +6,19 @@ final GraphQlGrammar g = GraphQlGrammar();
 
 void main() {
   test("Empty Array value test", () {
-    var parser = g.build(start: () => g.arrayValue().end());
+    var parser = g.buildFrom(g.arrayValue().end());
     var result = parser.parse("""[]""");
     expect(result.isSuccess, true);
   });
 
   test("One element Array value test", () {
-    var parser = g.build(start: () => g.arrayValue().end());
+    var parser = g.buildFrom(g.arrayValue().end());
     var result = parser.parse("""[1]""");
     expect(result.isSuccess, true);
   });
 
   test("Array values test", () {
-    var parser = g.build(start: () => g.arrayValue().end());
+    var parser = g.buildFrom(g.arrayValue().end());
     var result = parser.parse("""[]""");
     expect(result.isSuccess, true);
 
@@ -44,7 +44,7 @@ void main() {
   });
 
   test("Object value test", () {
-    var parser = g.build(start: () => g.objectValue().end());
+    var parser = g.buildFrom(g.objectValue().end());
     var result = parser.parse("""{
       
     }""");
@@ -76,7 +76,7 @@ void main() {
   });
 
   test("Argument test", () {
-    var parser = g.build(start: () => g.oneArgumentDefinition().end());
+    var parser = g.buildFrom(g.oneArgumentDefinition().end());
     var result = parser.parse("izan: int hello () ");
     expect(result.isSuccess, false);
     result = parser.parse("izan: int!");
@@ -104,7 +104,7 @@ void main() {
   });
 
   test("initialValue", () {
-    var parser = g.build(start: () => g.initialValue().end());
+    var parser = g.buildFrom(g.initialValue().end());
     var result = parser.parse('''12''');
 
     expect(result.isSuccess, true);
@@ -131,7 +131,7 @@ void main() {
   });
 
   test("initialize Value", () {
-    var parser = g.build(start: () => g.initialization().end());
+    var parser = g.buildFrom(g.initialization().end());
     var result = parser.parse('''=12''');
 
     expect(result.isSuccess, true);
@@ -160,7 +160,7 @@ void main() {
   });
 
   test("arguments Value", () {
-    var parser = g.build(start: () => g.arguments().end());
+    var parser = g.buildFrom(g.arguments().end());
     var result = parser.parse('''
     (test: String! = "hello", test2: Int = 3)
        ''');
@@ -168,7 +168,7 @@ void main() {
   });
 
   test("argumentValues Test", () {
-    var parser = g.build(start: () => g.argumentValues().end());
+    var parser = g.buildFrom(g.argumentValues().end());
     var result = parser.parse('''
     (test:  "hello", test2:  3)
        ''');
@@ -176,7 +176,7 @@ void main() {
   });
 
   test("Parametrized argument Test", () {
-    var parser = g.build(start: () => g.parametrizedArgument().end());
+    var parser = g.buildFrom(g.parametrizedArgument().end());
     var result = parser.parse('''\$azul''');
     expect(result.isSuccess, true);
 

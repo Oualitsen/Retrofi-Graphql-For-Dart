@@ -7,14 +7,14 @@ import 'package:parser/graphql_parser/utils.dart';
 
 enum GQQueryType { query, mutation, subscription }
 
-class GQDefinition extends GQTokenWithDirectives {
+class GQDefinition {
+  final String name;
   final List<GQDirectiveValue> list;
   final List<GQArgumentDefinition> arguments;
   final List<GQQueryElement> elements;
   final GQQueryType type;
 
-  GQDefinition(String name, this.list, this.arguments, this.elements, this.type)
-      : super(name) {
+  GQDefinition(this.name, this.list, this.arguments, this.elements, this.type) {
     checkVariables();
   }
 
@@ -39,7 +39,7 @@ class GQDefinition extends GQTokenWithDirectives {
 
   bool checkValue(String value) {
     for (var arg in arguments) {
-      if (arg.name == value) {
+      if (arg.token == value) {
         return true;
       }
     }
@@ -58,20 +58,18 @@ class GQDefinition extends GQTokenWithDirectives {
   }
 }
 
-class GQQueryElement extends GQTokenWithDirectives {
+class GQQueryElement extends GQToken {
   final List<GQDirectiveValue> list;
   final GQFragmentBlockDefinition? block;
   final List<GQArgumentValue> arguments;
 
-  GQQueryElement(String name, this.list, this.block, this.arguments)
-      : super(name);
+  GQQueryElement(super.token, this.list, this.block, this.arguments);
 
-  @override
   List<GQDirectiveValue> get directives => list;
 
   @override
   String serialize() {
-    return """$name ${serializeList(arguments, join: ", ")} ${serializeList(directives, join: " ")}
+    return """$token ${serializeList(arguments, join: ", ")} ${serializeList(directives, join: " ")}
       ${block != null ? block!.serialize() : ''}""";
   }
 }

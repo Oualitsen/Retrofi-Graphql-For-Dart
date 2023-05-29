@@ -1,0 +1,16 @@
+
+type User {
+    firstName: String!
+    car: Car
+}
+
+type Car {
+    brand: String!
+    model: String!
+}
+
+fragment UserFragment on User {
+    firstName car {
+        brand
+    }
+}

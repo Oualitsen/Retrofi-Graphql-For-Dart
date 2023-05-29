@@ -1,6 +1,7 @@
 import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:parser/graphql_parser/model/gq_argument.dart';
 import 'package:parser/graphql_parser/model/dart_serializable.dart';
+import 'package:parser/graphql_parser/model/gq_directive.dart';
 import 'package:parser/graphql_parser/model/gq_type.dart';
 
 class GQField extends DartSerializable {
@@ -9,6 +10,7 @@ class GQField extends DartSerializable {
   final Object? initialValue;
   final String? documentation;
   final List<GQArgumentDefinition> arguments;
+  final List<GQDirectiveValue>? directives;
 
   GQField({
     required this.name,
@@ -16,6 +18,7 @@ class GQField extends DartSerializable {
     required this.arguments,
     this.initialValue,
     this.documentation,
+    this.directives,
   });
 
   @override

@@ -6,10 +6,12 @@ import 'package:parser/graphql_parser/model/gq_fragment.dart';
 import 'package:parser/graphql_parser/model/gq_input_type.dart';
 import 'package:parser/graphql_parser/model/gq_interface.dart';
 import 'package:parser/graphql_parser/model/gq_token.dart';
+import 'package:parser/graphql_parser/model/gq_type.dart';
 import 'package:parser/graphql_parser/model/gq_union.dart';
 import 'package:parser/graphql_parser/model/gq_queries.dart';
 
 mixin GrammarDataMixin {
+  static const typename = "__typename";
   final Set<String> scalars = {
     "ID",
     "Boolean",
@@ -19,7 +21,6 @@ mixin GrammarDataMixin {
     "null"
   };
   final Map<String, GQFragmentDefinition> fragments = {};
-  final Map<String, GQInlineFragmentDefinition> inlineFragments = {};
   final Map<String, GQUnionDefinition> unions = {};
   final Map<String, GQInputDefinition> inputs = {};
   final Map<String, GQTypeDefinition> types = {};
@@ -43,48 +44,48 @@ mixin GrammarDataMixin {
   }
 
   void addFragmentDefinition(GQFragmentDefinition fragment) {
-    if (fragments.containsKey(fragment.name)) {
+    if (fragments.containsKey(fragment.fragmentName)) {
       throw ParseException(
-          "Fragment ${fragment.name} has already been declared");
+          "Fragment ${fragment.fragmentName} has already been declared");
     }
-    fragments[fragment.name] = fragment;
+    fragments[fragment.fragmentName] = fragment;
   }
 
   void addUnionDefinition(GQUnionDefinition union) {
-    if (unions.containsKey(union.name)) {
-      throw ParseException("Union ${union.name} has already been declared");
+    if (unions.containsKey(union.token)) {
+      throw ParseException("Union ${union.token} has already been declared");
     }
-    unions[union.name] = union;
+    unions[union.token] = union;
   }
 
   void addInputDefinition(GQInputDefinition input) {
-    if (inputs.containsKey(input.name)) {
-      throw ParseException("Input ${input.name} has already been declared");
+    if (inputs.containsKey(input.token)) {
+      throw ParseException("Input ${input.token} has already been declared");
     }
-    inputs[input.name] = input;
+    inputs[input.token] = input;
   }
 
   void addTypeDefinition(GQTypeDefinition type) {
-    if (types.containsKey(type.name)) {
-      throw ParseException("Type ${type.name} has already been declared");
+    if (types.containsKey(type.token)) {
+      throw ParseException("Type ${type.token} has already been declared");
     }
-    types[type.name] = type;
+    types[type.token] = type;
   }
 
   void addInterfaceDefinition(GQInterfaceDefinition interface) {
-    if (interfaces.containsKey(interface.name)) {
+    if (interfaces.containsKey(interface.token)) {
       throw ParseException(
-          "Interface ${interface.name} has already been declared");
+          "Interface ${interface.token} has already been declared");
     }
-    interfaces[interface.name] = interface;
+    interfaces[interface.token] = interface;
   }
 
   void addEnumDefinition(GQEnumDefinition enumDefinition) {
-    if (enums.containsKey(enumDefinition.name)) {
+    if (enums.containsKey(enumDefinition.token)) {
       throw ParseException(
-          "Enum ${enumDefinition.name} has already been declared");
+          "Enum ${enumDefinition.token} has already been declared");
     }
-    enums[enumDefinition.name] = enumDefinition;
+    enums[enumDefinition.token] = enumDefinition;
   }
 
   void addQueryDefinition(GQDefinition definition) {
@@ -157,7 +158,7 @@ mixin GrammarDataMixin {
      * Check if fragment applies to this type
      */
 
-    if (fragment.onTypeName != type.name) {
+    if (fragment.onTypeName != type.token) {
       throw ParseException(
           "Fragment $fragment does not apply to $type. It applies to ${fragment.onTypeName}");
     }
@@ -219,7 +220,8 @@ mixin GrammarDataMixin {
   void fillProjectedTypes() {
     print("filling projected types");
     fragments.forEach((key, fragment) {
-      createProjectedType(fragment.onTypeName, fragment.name, fragment.block);
+      createProjectedType(
+          fragment.onTypeName, fragment.fragmentName, fragment.block);
     });
   }
 
@@ -231,7 +233,7 @@ mixin GrammarDataMixin {
       throw ParseException("Type or interface $typeName is not defined");
     }
 
-    final newName = "${type.name}_${fragmentName ?? ''}";
+    final newName = "${type.token}_${fragmentName ?? ''}";
 
     if (types[newName] != null) {
       //already defined
@@ -242,9 +244,9 @@ mixin GrammarDataMixin {
     ///Let's create a new type based on the type name
     ///
     List<GQField> fields = [];
-    final newType =
-        GQTypeDefinition(name: newName, fields: fields, interfaceNames: {});
-    print("new type name = ${newType.name}");
+    final newType = GQTypeDefinition(
+        name: newName, fields: fields, interfaceNames: {}, directives: []);
+    print("new type name = ${newType.token}");
 
     ///
     ///let's get the fields
@@ -262,41 +264,44 @@ mixin GrammarDataMixin {
       GQTokenWithFields type, GQProjection projection) {
     print("projection name = ${projection.actualName}");
 
-    if (projection is GQInlineFragmentDefinition) {
-      print("handle inline fragment definition");
-
-      final _type = createProjectedType(
-          projection.typeName, projection.name, projection.block);
-      print("_type = ${_type.name} has been created ...${projection.name}");
-      return [];
-    }
-
     if (projection.isFragmentReference) {
       //this is a fragment reference ...
 
       var result = <GQField>[];
-      final frag = getFragment(projection.name);
+      final frag = getFragment(projection.token);
       frag.block.projections.forEach((key, value) {
         result.addAll(createFragmentField(type, value));
       });
       return result;
     }
     if (projection.block != null) {
-      // do something else here
-      print("#####################  ");
+      print("##################### block is not null ${type.token}");
+
+      return [];
     }
-    var list = type.fields.where((element) => element.name == projection.name);
+
+    if (projection.token == typename) {
+      /**
+       * __typename case
+       */
+      return [
+        GQField(name: typename, type: GQType("String", false), arguments: [])
+      ];
+    }
+
+    var list = type.fields.where((element) => element.name == projection.token);
 
     if (list.isEmpty) {
       throw ParseException(
-          "${type.name} does not define a field with name ${projection.name}");
+          "${type.token} does not define a field with name ${projection.token}");
     }
-    final _field = list.first;
-    final result = GQField(
-        name: projection.actualName,
-        type: _field.type,
-        arguments: _field.arguments);
-    return [result];
+    final field = list.first;
+    return [
+      GQField(
+          name: projection.actualName,
+          type: field.type,
+          arguments: field.arguments)
+    ];
   }
 
   GQTokenWithFields? getTypeOrInterfaceDefinition(String name) {

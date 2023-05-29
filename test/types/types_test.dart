@@ -7,7 +7,7 @@ import 'package:petitparser/petitparser.dart';
 void main() async {
   test("Types test", () {
     final GraphQlGrammar g = GraphQlGrammar();
-    var parser = g.build(start: () => g.fullGrammar().end());
+    var parser = g.buildFrom(g.fullGrammar().end());
 
     var parsed = parser
         .parse(File("test/types/types_schema.graphql").readAsStringSync());
@@ -22,7 +22,7 @@ void main() async {
 
   test("Fragment Projected types (Simple Types)", () {
     final GraphQlGrammar g = GraphQlGrammar();
-    var parser = g.build(start: () => g.fullGrammar().end());
+    var parser = g.buildFrom(g.fullGrammar().end());
 
     var parsed = parser.parse(
         File("test/types/types_with_fragment_schema.graphql")
@@ -38,7 +38,7 @@ void main() async {
 
   test("Fragment Projected types (With Alias)", () {
     final GraphQlGrammar g = GraphQlGrammar();
-    var parser = g.build(start: () => g.fullGrammar().end());
+    var parser = g.buildFrom(g.fullGrammar().end());
 
     var parsed = parser.parse(
         File("test/types/types_with_fragment_schema_alias.graphql")

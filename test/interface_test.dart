@@ -6,7 +6,7 @@ final GraphQlGrammar g = GraphQlGrammar();
 
 void main() {
   test("Implements fields", () {
-    var parser = g.build(start: () => g.implementsToken().end());
+    var parser = g.buildFrom(g.implementsToken().end());
     var result = parser.parse('''
       implements UserBase & BasicEntity
     ''');
@@ -14,7 +14,7 @@ void main() {
   });
 
   test("Interface  test", () {
-    var parser = g.build(start: () => g.interfaceDefinition().end());
+    var parser = g.buildFrom(g.interfaceDefinition().end());
     var result = parser.parse('''
       interface Test implements BasicEntity & UserBase & UserBase2 @skip(if: true) {
         test: boolean! 
@@ -27,7 +27,7 @@ void main() {
   });
 
   test("Interface  list test", () {
-    var parser = g.build(start: () => g.interfaceList().end());
+    var parser = g.buildFrom(g.interfaceList().end());
     var result = parser.parse('''
        BasicEntity  
     ''');
@@ -35,7 +35,7 @@ void main() {
   });
 
   test("Interface  list test multiple", () {
-    var parser = g.build(start: () => g.interfaceList().end());
+    var parser = g.buildFrom(g.interfaceList().end());
     var result = parser.parse('''
        BasicEntity & UserBase & UserBase2 
     ''');

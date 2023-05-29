@@ -6,7 +6,7 @@ final GraphQlGrammar g = GraphQlGrammar();
 
 void main() {
   test("Directive value  test", () {
-    var parser = g.build(start: () => g.directiveValue().end());
+    var parser = g.buildFrom(g.directiveValue().end());
     var result = parser.parse('''
       @skip(if: true)
     ''');
@@ -22,7 +22,7 @@ void main() {
   });
 
   test("Directive scopes test", () {
-    var parser = g.build(start: () => g.directiveScopes().end());
+    var parser = g.buildFrom(g.directiveScopes().end());
     var result = parser.parse('''
     SCALAR|OBJECT|INTERFACE | ARGUMENT_DEFINITION
     ''');
@@ -30,7 +30,7 @@ void main() {
   });
 
   test("Directive definition test", () {
-    var parser = g.build(start: () => g.directiveDefinition().end());
+    var parser = g.buildFrom(g.directiveDefinition().end());
     var result = parser.parse('''
     directive @test(test: String! = "Azul fellawen") on INTERFACE | ARGUMENT_DEFINITION
     ''');

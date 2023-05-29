@@ -9,7 +9,7 @@ class GQType extends GQToken {
   ///
   bool isScalar;
 
-  GQType(String name, this.nullable, {this.isScalar = true}) : super(name);
+  GQType(super.name, this.nullable, {this.isScalar = true});
 
   @override
   String toString() {
@@ -17,13 +17,13 @@ class GQType extends GQToken {
   }
 
   String toDartType(Map<String, String> typeMapping) {
-    var dartTpe = typeMapping[name] ?? name;
+    var dartTpe = typeMapping[token] ?? token;
     return "$dartTpe$nullableTextDart";
   }
 
   @override
   String serialize() {
-    return "$name$nullableText";
+    return "$token$nullableText";
   }
 
   String get nullableText => nullable ? "" : "!";

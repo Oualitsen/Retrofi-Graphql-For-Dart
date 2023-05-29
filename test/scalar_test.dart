@@ -6,7 +6,7 @@ void main() {
   test("Object value test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.scalarDefinition().end());
+    var parser = g.buildFrom(g.scalarDefinition().end());
     var result = parser.parse("""
       scalar Date 
     """);
@@ -17,7 +17,7 @@ void main() {
   test("Object value test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.scalarDefinition().end());
+    var parser = g.buildFrom(g.scalarDefinition().end());
     var result = parser.parse("""
       scalar Date @skip(if: true) @skip2(ifNot: 12
       )

@@ -6,7 +6,7 @@ void main() {
   test("Type test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.typeDefinition().end());
+    var parser = g.buildFrom(g.typeDefinition().end());
     var result = parser.parse('''
       type Test2 implements Test {
         name: String!
@@ -38,7 +38,7 @@ void main() {
   test("Type test with arguments", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.typeDefinition().end());
+    var parser = g.buildFrom(g.typeDefinition().end());
     var result = parser.parse('''
       type Test2 implements Test {
         name(test: String!): String!

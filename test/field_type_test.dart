@@ -7,7 +7,7 @@ void main() {
   test("non nullable type test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.typeTokenDefinition().end());
+    var parser = g.buildFrom(g.typeTokenDefinition().end());
     var result = parser.parse('''
       String!
     ''') as Result<GQType>;
@@ -19,7 +19,7 @@ void main() {
   test("nullable type test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.simpleTypeTokenDefinition().end());
+    var parser = g.buildFrom(g.simpleTypeTokenDefinition().end());
     var result = parser.parse('''
       String
     ''') as Result<GQType>;

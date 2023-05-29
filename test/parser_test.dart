@@ -6,7 +6,7 @@ final GraphQlGrammar g = GraphQlGrammar();
 
 void main() {
   test("Single quote String token", () {
-    var parser = g.build(start: () => g.singleLineStringToken().end());
+    var parser = g.buildFrom(g.singleLineStringToken().end());
     var result = parser.parse('''"azul"''');
     expect(result.isSuccess, true);
     result = g.singleLineStringToken().parse('''"azul
@@ -16,7 +16,7 @@ void main() {
   });
 
   test("BlockString token Test", () {
-    var parser = g.build(start: () => g.blockStringToken().end());
+    var parser = g.buildFrom(g.blockStringToken().end());
     var result = parser.parse('''""" Hello world """''');
     expect(result.isSuccess, true);
     result = g.singleLineStringToken().parse('''"""
@@ -28,7 +28,7 @@ void main() {
 
   test("Boolean token test", () {
     var g = GraphQlGrammar();
-    var parser = g.build(start: () => g.boolean().end());
+    var parser = g.buildFrom(g.boolean().end());
     var result = parser.parse("true");
     expect(result.isSuccess, true);
     result = parser.parse("false");
@@ -40,7 +40,7 @@ void main() {
   });
 
   test("Int token test", () {
-    var parser = g.build(start: () => g.intParser().end());
+    var parser = g.buildFrom(g.intParser().end());
     var result = parser.parse("0x1234");
     expect(result.isSuccess, true);
     result = g.intParser().parse("12");
@@ -51,7 +51,7 @@ void main() {
   });
 
   test("Double token test", () {
-    var parser = g.build(start: () => g.doubleParser().end());
+    var parser = g.buildFrom(g.doubleParser().end());
 
     var result = parser.parse("0x123456.15");
     expect(result.isSuccess, false);

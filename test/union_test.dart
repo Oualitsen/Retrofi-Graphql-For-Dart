@@ -27,7 +27,7 @@ void main() {
     union type = User | Client
     ''');
     expect(result.isSuccess, true);
-    expect(result.value.name, "type");
+    expect(result.value.token, "type");
     expect(result.value.typeNames.length, 2);
   });
 
@@ -40,7 +40,7 @@ void main() {
     union type = User
     ''');
     expect(result.isSuccess, true);
-    expect(result.value.name, "type");
+    expect(result.value.token, "type");
     expect(result.value.typeNames.length, 1);
   });
 }

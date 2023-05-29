@@ -7,7 +7,7 @@ void main() {
   test("Query  element", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser = g.build(start: () => g.queryElement().end());
+    var parser = g.buildFrom(g.queryElement().end());
     var result = parser.parse(''' 
     adType(id: \$id) @test {
     ...adTypeFields
@@ -20,8 +20,7 @@ void main() {
   test("Query  test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser =
-        g.build(start: () => g.queryDefinition(GQQueryType.query).end());
+    var parser = g.buildFrom(g.queryDefinition(GQQueryType.query).end());
     var result = parser.parse('''
       
       query AdType(\$id: String!) {
@@ -37,8 +36,7 @@ void main() {
   test("Query  test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser =
-        g.build(start: () => g.queryDefinition(GQQueryType.mutation).end());
+    var parser = g.buildFrom(g.queryDefinition(GQQueryType.mutation).end());
     var result = parser.parse('''
       
       mutation AdType(\$id: String!) {
@@ -54,8 +52,7 @@ void main() {
   test("Query  test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser =
-        g.build(start: () => g.queryDefinition(GQQueryType.query).end());
+    var parser = g.buildFrom(g.queryDefinition(GQQueryType.query).end());
     var result = parser.parse('''
       
       query AdType(\$id: String!) {
@@ -66,14 +63,13 @@ void main() {
     
     ''');
     expect(result.isSuccess, true);
-    print((result.value as GQDefinition).serialize());
+    print((result.value).serialize());
   });
 
   test("Query  test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser =
-        g.build(start: () => g.queryDefinition(GQQueryType.subscription).end());
+    var parser = g.buildFrom(g.queryDefinition(GQQueryType.subscription).end());
     var result = parser.parse('''
       subscription AdType(\$id: String!) {
         adType(id: \$id, name: "Ramdane") {
@@ -83,14 +79,13 @@ void main() {
     
     ''');
     expect(result.isSuccess, true);
-    print((result.value as GQDefinition).serialize());
+    print((result.value).serialize());
   });
 
   test("subscription test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
-    var parser =
-        g.build(start: () => g.queryDefinition(GQQueryType.subscription).end());
+    var parser = g.buildFrom(g.queryDefinition(GQQueryType.subscription).end());
     var result = parser.parse('''
       subscription AdType(\$id: String!) {
         adType(id: \$id, name: "Ramdane") {

@@ -13,12 +13,12 @@ class GQArgumentDefinition extends GQToken {
 
   @override
   String toString() {
-    return 'Argument{name: $name, type: $type}';
+    return 'Argument{name: $token, type: $type}';
   }
 
   @override
   String serialize() {
-    var r = "$name: ${type.serialize()}";
+    var r = "$token: ${type.serialize()}";
     if (initialValue != null) {
       r += " = $initialValue";
     }
@@ -37,11 +37,11 @@ class GQArgumentValue extends GQToken {
 
   @override
   String serialize() {
-    return "$name: $value";
+    return "$token: $value";
   }
 
   @override
   String toString() {
-    return 'GraphqlArgumentValue{value: $value name: $name}';
+    return 'GraphqlArgumentValue{value: $value name: $token}';
   }
 }

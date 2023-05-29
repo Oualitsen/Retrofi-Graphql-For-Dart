@@ -6,7 +6,7 @@ final GraphQlGrammar g = GraphQlGrammar();
 
 void main() {
   test("identifier test", () {
-    var parser = g.build(start: () => g.identifier().end());
+    var parser = g.buildFrom(g.identifier().end());
     var result = parser.parse(''' test12 ''');
     expect(result.isSuccess, true);
     result = parser.parse(''' 1test ''');
@@ -14,7 +14,7 @@ void main() {
   });
 
   test("simple type test", () {
-    var parser = g.build(start: () => g.simpleTypeTokenDefinition().end());
+    var parser = g.buildFrom(g.simpleTypeTokenDefinition().end());
     var result = parser.parse(''' test12 ''');
     expect(result.isSuccess, true);
     result = parser.parse(''' 1test ''');
@@ -25,7 +25,7 @@ void main() {
   });
 
   test("list type test", () {
-    var parser = g.build(start: () => g.listTypeDefinition().end());
+    var parser = g.buildFrom(g.listTypeDefinition().end());
     var result = parser.parse(''' [test12] ''');
     expect(result.isSuccess, true);
     result = parser.parse(''' 1test ''');
@@ -39,7 +39,7 @@ void main() {
   });
 
   test(" type test", () {
-    var parser = g.build(start: () => g.typeTokenDefinition().end());
+    var parser = g.buildFrom(g.typeTokenDefinition().end());
     var result = parser.parse(''' [test12] ''');
     expect(result.isSuccess, true);
     result = parser.parse(''' 1test ''');

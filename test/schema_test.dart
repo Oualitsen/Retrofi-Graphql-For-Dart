@@ -6,7 +6,7 @@ final GraphQlGrammar g = GraphQlGrammar();
 
 void main() {
   test("Schema element  test", () {
-    var parser = g.build(start: () => g.schemaElement().end());
+    var parser = g.buildFrom(g.schemaElement().end());
     var result = parser.parse('''
       
       mutation: Test2
@@ -17,7 +17,7 @@ void main() {
   });
 
   test("Schema   test", () {
-    var parser = g.build(start: () => g.schemaDefinition().end());
+    var parser = g.buildFrom(g.schemaDefinition().end());
     var result = parser.parse('''
       schema {
       mutation: Test2
