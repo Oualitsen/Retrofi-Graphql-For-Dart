@@ -4,19 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:petitparser/petitparser.dart';
 
-final GraphQlGrammar g = GraphQlGrammar();
-
 void main() async {
   group("projected types test", () {
     const folderPath = "test/fragment/fragment_projections_tests";
 
     test("Simple projection", () {
-      final _text = File("$folderPath/simple_projection_schema.graphql")
+      final GraphQlGrammar g = GraphQlGrammar();
+
+      final text = File("$folderPath/simple_projection_schema.graphql")
           .readAsStringSync();
 
-      final GraphQlGrammar g = GraphQlGrammar();
       final parser = g.buildFrom(g.fullGrammar().end());
-      final parsed = parser.parse(_text);
+      final parsed = parser.parse(text);
 
       expect(parsed.isSuccess, true);
       var type = g.getType("Person_PersonFragment");
@@ -39,12 +38,12 @@ void main() async {
     });
 
     test("Fragment reference", () {
-      final _text = File("$folderPath/fragment_reference_schema.graphql")
+      final text = File("$folderPath/fragment_reference_schema.graphql")
           .readAsStringSync();
 
       final GraphQlGrammar g = GraphQlGrammar();
       final parser = g.buildFrom(g.fullGrammar().end());
-      final parsed = parser.parse(_text);
+      final parsed = parser.parse(text);
       expect(parsed.isSuccess, true);
 
       g.types.forEach((key, value) {

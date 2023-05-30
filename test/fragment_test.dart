@@ -9,9 +9,7 @@ void main() {
 
     var parser = g.buildFrom(g.plainFragmentField().end());
     var result = parser.parse('''
-      
       name
-    
     ''');
     expect(result.isSuccess, true);
     GQProjection value = result.value;

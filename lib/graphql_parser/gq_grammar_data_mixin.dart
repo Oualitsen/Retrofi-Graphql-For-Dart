@@ -101,11 +101,11 @@ mixin GrammarDataMixin {
         map = subscriptions;
         break;
     }
-    if (map.containsKey(definition.name)) {
+    if (map.containsKey(definition.token)) {
       throw ParseException(
-          "${definition.type.name} ${definition.name} has already been declared");
+          "${definition.type.name} ${definition.token} has already been declared");
     }
-    map[definition.name] = definition;
+    map[definition.token] = definition;
   }
 
   void checkType(String name) {
@@ -218,7 +218,6 @@ mixin GrammarDataMixin {
   }
 
   void fillProjectedTypes() {
-    print("filling projected types");
     fragments.forEach((key, fragment) {
       createProjectedType(
           fragment.onTypeName, fragment.fragmentName, fragment.block);

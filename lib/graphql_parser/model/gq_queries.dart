@@ -7,14 +7,14 @@ import 'package:parser/graphql_parser/utils.dart';
 
 enum GQQueryType { query, mutation, subscription }
 
-class GQDefinition {
-  final String name;
-  final List<GQDirectiveValue> list;
+class GQDefinition extends GQToken {
+  final List<GQDirectiveValue> directives;
   final List<GQArgumentDefinition> arguments;
   final List<GQQueryElement> elements;
   final GQQueryType type;
 
-  GQDefinition(this.name, this.list, this.arguments, this.elements, this.type) {
+  GQDefinition(
+      super.token, this.directives, this.arguments, this.elements, this.type) {
     checkVariables();
   }
 
@@ -47,11 +47,8 @@ class GQDefinition {
   }
 
   @override
-  List<GQDirectiveValue> get directives => list;
-
-  @override
   String serialize() {
-    return """${type.name} $name ${serializeList(arguments)} ${serializeList(list)} {
+    return """${type.name} $token ${serializeList(arguments)} ${serializeList(directives)} {
         ${serializeList(elements, join: "\n\r", withParenthesis: false)}
       }
     """;

@@ -9,11 +9,11 @@ final GraphQlGrammar g = GraphQlGrammar();
 void main() async {
   group("bms grammar", () {
     test("bms geammar fragment dependecy", () {
-      final _text = File("test/schema.graphql").readAsStringSync();
+      final text = File("test/schema.graphql").readAsStringSync();
 
       final GraphQlGrammar g = GraphQlGrammar();
       var parser = g.buildFrom(g.fullGrammar().end());
-      var parsed = parser.parse(_text);
+      var parsed = parser.parse(text);
 
       expect(parsed.isSuccess, true);
       var frag = g.fragments["userFrag"]!;

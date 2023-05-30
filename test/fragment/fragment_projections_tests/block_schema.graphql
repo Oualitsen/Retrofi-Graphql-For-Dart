@@ -20,9 +20,7 @@ type Car {
     year: Int!
 }
 
-fragment PersonAddressOnlyFragment on Person {
-    address {
-         city zipCode street
-    }
-}
+
+
+
 
