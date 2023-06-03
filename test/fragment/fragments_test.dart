@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parser/graphql_parser/gq_grammar.dart';
+import 'package:parser/graphql_parser/model/gq_fragment.dart';
 import 'package:petitparser/petitparser.dart';
 
 final GraphQlGrammar g = GraphQlGrammar();
@@ -17,7 +18,9 @@ void main() async {
 
       expect(parsed.isSuccess, true);
       var frag = g.fragments["userFrag"]!;
-      expect(frag.dependecies.map((e) => e.fragmentName), contains("beFrag"));
+      expect(
+          frag.dependecies.map((e) => (e as GQFragmentDefinition).fragmentName),
+          contains("beFrag"));
       print("frag = ${frag.toString()}");
     });
   });
@@ -45,7 +48,8 @@ void main() async {
       expect(parsed.isSuccess, true);
 
       final frag = g.fragments["AddressFragment"]!;
-      expect(frag.dependecies.map((e) => e.fragmentName),
+      expect(
+          frag.dependecies.map((e) => (e as GQFragmentDefinition).fragmentName),
           containsAll(["StateFragment"]));
       expect(g.fragments.length, greaterThanOrEqualTo(2));
     });

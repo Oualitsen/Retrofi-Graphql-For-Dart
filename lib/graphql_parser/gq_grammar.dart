@@ -28,7 +28,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   });
 
   @override
-  Parser start() => ref0(enumDefinition).end();
+  Parser start() => ref0(fullGrammar).end();
 
   // write the full grammar here
 
@@ -57,7 +57,8 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
     updateFragmentDependencies();
     updateInterfaceParents();
     updateDirectives();
-    fillProjectedTypes();
+    fillTypedFragments();
+    createProjectedTypes();
   }
 
   void updateInterfaceParents() {
@@ -501,7 +502,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   Parser<GQProjection> fragmentNameValue() {
     return seq3(ref1(token, "..."), identifier(), directiveValueList()).map3(
       (_, name, directives) => GQProjection(
-          onTypeName: null,
+          fragmentName: name,
           token: name,
           alias: null,
           isFragmentReference: true,
@@ -515,68 +516,56 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQProjection> plainFragmentField() {
-    return (identifier() &
-            (seq2(colon(), identifier()).map2((_, alias) => alias)).optional() &
-            directiveValueList() &
-            )
-        .map((list) => GQProjection(
-              token: list.first,
-              onTypeName: null,
-              alias: list[1],
+    return seq4(
+            (seq2(
+              identifier(),
+              colon(),
+            ).map2((alias, _) => alias)).optional(),
+            identifier(),
+            directiveValueList(),
+            ref0(fragmentBlock).optional())
+        .map4((alias, token, directives, block) => GQProjection(
+              token: token,
+              fragmentName: null,
+              alias: alias,
               isFragmentReference: false,
-              block: null,
-              directives: [],
+              block: block,
+              directives: directives,
             ));
   }
 
   Parser<GQProjection> inlineFragment() {
-    return seq3(
+    return seq4(
       ref1(token, "..."),
       ref1(token, "on"),
-      seq2(identifier(), directiveValueList()).map2(
-        (typeName, directives) => GQProjection(
-          token: '',
-          onTypeName: typeName,
-          alias: null,
-          isFragmentReference: false,
-          block: null,
-          directives: directives,
-        ),
-      ),
-    ).map3((p0, p1, projection) => projection);
-    return seq3(
-      ref1(token, "..."),
-      ref1(token, "on"),
-      seq3(identifier(), directiveValueList(), fragmentBlock()).map3(
-        (typeName, directives, block) => GQProjection(
-          token: '',
-          onTypeName: typeName,
+      identifier(),
+      seq2(directiveValueList(), ref0(fragmentBlock)).map2(
+        (directives, block) => GQProjection(
+          fragmentName: null,
+          token: null,
           alias: null,
           isFragmentReference: false,
           block: block,
           directives: directives,
         ),
       ),
-    ).map3((p0, p1, projection) => projection);
+    ).map4((p0, p1, typeName, projection) {
+      addFragmentDefinition(GQInlineFragmentDefinition(
+          typeName, projection.block!, projection.directives));
+      return projection;
+    });
   }
 
   Parser<GQProjection> fragmentValue() =>
       (inlineFragment() | fragmentNameValue()).cast<GQProjection>();
 
   Parser<GQFragmentDefinition> fragmentDefinition() {
-    print("Reading fragment definition");
     return seq4(
             seq3(
-              "fragment".toParser().map((value) {
-                print("Reading fragment key word");
-                return value;
-              }),
+              "fragment".toParser(),
               identifier(),
               ref1(token, "on"),
-            ).map3((p0, fragmentName, p2) {
-              print("Read fragment name $fragmentName");
-              return fragmentName;
-            }),
+            ).map3((p0, fragmentName, p2) => fragmentName),
             identifier(),
             directiveValueList(),
             fragmentBlock())

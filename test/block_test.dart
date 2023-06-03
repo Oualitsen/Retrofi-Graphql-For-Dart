@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:petitparser/petitparser.dart';
+import 'package:petitparser/debug.dart';
 
 void main() {
   test("Fragment value test", () {
@@ -20,7 +21,7 @@ void main() {
     final GraphQlGrammar g = GraphQlGrammar();
 
     var parser = g.buildFrom(g.fragmentBlock().end());
-    var result = parser.parse('''
+    var result = trace(parser).parse('''
         {
           name 
          }

@@ -1,35 +1,32 @@
 import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
 import 'package:parser/graphql_parser/model/gq_directive.dart';
+import 'package:parser/graphql_parser/model/gq_input_type.dart';
 import 'package:parser/graphql_parser/model/gq_token.dart';
 import 'package:parser/graphql_parser/utils.dart';
 
-class GQFragmentDefinition extends GQToken {
-  /// can be an interface or a type
+class GQTypedFragment {
+  final GQFragmentDefinitionBase fragment;
+  final GQTypeDefinition onType;
+
+  GQTypedFragment(this.fragment, this.onType);
+}
+
+abstract class GQFragmentDefinitionBase extends GQToken {
   final String onTypeName;
 
   final GQFragmentBlockDefinition block;
-  final List<GQDirectiveValue> directiveList;
+  final List<GQDirectiveValue> directives;
 
-  final Set<GQFragmentDefinition> dependecies = {};
-  final String fragmentName;
+  final Set<GQFragmentDefinitionBase> dependecies = {};
 
-  GQFragmentDefinition(
-      this.fragmentName, this.onTypeName, this.block, this.directiveList)
-      : super(fragmentName);
+  GQFragmentDefinitionBase(
+    super.token,
+    this.onTypeName,
+    this.block,
+    this.directives,
+  );
 
-  @override
-  String toString() {
-    return serialize();
-  }
-
-  @override
-  String serialize() {
-    return """
-      fragment $fragmentName on $onTypeName ${directiveList.map((e) => e.serialize()).join(" ")} ${block.serialize()} 
-    """;
-  }
-
-  void updateDepencies(Map<String, GQFragmentDefinition> map) {
+  void updateDepencies(Map<String, GQFragmentDefinitionBase> map) {
     final Set<String> dependecyNames = block.getDependecies(map);
     for (var name in dependecyNames) {
       final def = map[name];
@@ -39,13 +36,65 @@ class GQFragmentDefinition extends GQToken {
       dependecies.add(def);
     }
   }
+
+  String generateName();
+}
+
+class GQInlineFragmentDefinition extends GQFragmentDefinitionBase {
+  GQInlineFragmentDefinition(String onTypeName, GQFragmentBlockDefinition block,
+      List<GQDirectiveValue> directives)
+      : super("__inline_${DateTime.now().millisecondsSinceEpoch}", onTypeName,
+            block, directives);
+
+  @override
+  String serialize() {
+    return """
+     ... $token on $onTypeName ${directives.map((e) => e.serialize()).join(" ")} ${block.serialize()} 
+    """;
+  }
+
+  @override
+  String generateName() {
+    return "${onTypeName}_inline_${block.uniqueName}";
+  }
+}
+
+class GQFragmentDefinition extends GQFragmentDefinitionBase {
+  /// can be an interface or a type
+
+  final String fragmentName;
+
+  GQFragmentDefinition(this.fragmentName, String onTypeName,
+      GQFragmentBlockDefinition block, List<GQDirectiveValue> directives)
+      : super(fragmentName, onTypeName, block, directives);
+
+  @override
+  String toString() {
+    return serialize();
+  }
+
+  @override
+  String serialize() {
+    return """
+      fragment $fragmentName on $onTypeName ${directives.map((e) => e.serialize()).join(" ")} ${block.serialize()} 
+    """;
+  }
+
+  @override
+  String generateName() {
+    return "${onTypeName}_$fragmentName";
+  }
 }
 
 class GQProjection extends GQToken {
   ///
+  ///This contains a reference to the fragment name containing this projection
+  ///
+  final String? fragmentName;
+
+  ///
   ///This should contain the name of the type this projection is on
   ///
-  final String? onTypeName;
   final String? alias;
 
   ///
@@ -65,22 +114,20 @@ class GQProjection extends GQToken {
   final List<GQDirectiveValue> directives;
 
   GQProjection({
-    required String token,
-    required this.onTypeName,
+    required this.fragmentName,
+    required String? token,
     required this.alias,
     required this.isFragmentReference,
     required this.block,
     required this.directives,
-  }) : super(token);
+  }) : super(token ??
+            fragmentName ??
+            "projection_${DateTime.now().millisecondsSinceEpoch}");
 
   @override
   String toString() {
     //return 'FragmentField{fieldName: $name, alias: $alias}';
     return serialize();
-  }
-
-  String get uniqueName {
-    return "${actualName}_";
   }
 
   String get actualName => alias ?? token;
@@ -104,7 +151,7 @@ class GQProjection extends GQToken {
     return result;
   }
 
-  Set<String> getDependecies(Map<String, GQFragmentDefinition> map) {
+  Set<String> getDependecies(Map<String, GQFragmentDefinitionBase> map) {
     final result = <String>{};
     if (isFragmentReference) {
       if (block == null) {
@@ -167,7 +214,7 @@ class GQFragmentBlockDefinition {
     return serialize();
   }
 
-  Set<String> getDependecies(Map<String, GQFragmentDefinition> map) {
+  Set<String> getDependecies(Map<String, GQFragmentDefinitionBase> map) {
     var result = <String>{};
     var p = projections.values;
     for (var v in p) {

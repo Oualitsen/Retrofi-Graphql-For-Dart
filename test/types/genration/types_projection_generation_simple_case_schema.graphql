@@ -1,0 +1,54 @@
+
+
+
+type User {
+    firstName: String!
+    lastName: String!
+    address: UserAddress!
+}
+
+type UserAddress {
+    street: String!
+    zipCode: String!
+    city: String
+    state: State!
+}
+
+type Document {
+    name: String
+    fileName: String
+    folderName: String
+    numberOfFiles: Int
+}
+
+type State {
+    name: String!
+    surface: Int!
+    lat: Float!
+    lng: Float!
+    document: Document
+}
+
+
+
+fragment UserAddressFragment on UserAddress {
+    street state {
+        name surface document {
+            name fileName folderName
+        }
+    }
+}
+
+fragment UserFragment on User {
+    firstName address {
+        city state
+    }
+}
+
+fragment StateFragment on State {
+    name lat lng
+}
+
+
+
+

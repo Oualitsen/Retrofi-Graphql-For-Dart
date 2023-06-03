@@ -43,7 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
             var praser = g.start();
 
-            var result = praser.parse('''"test"''');
+            praser.parse('''"test"''');
           },
         ),
       ),

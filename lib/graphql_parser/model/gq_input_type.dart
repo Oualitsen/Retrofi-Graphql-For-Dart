@@ -25,6 +25,18 @@ class GQInputDefinition extends GQTokenWithFields implements DartSerializable {
 
   @override
   String toDart(GraphQlGrammar grammar) {
+    return """
+    @JsonSerializable()
+      class $token {
+          ${serializeListText(fields.map((e) => e.toDart(grammar)).toList(), join: "\n\r          ", withParenthesis: false)}
+          
+          $token({${fields.map((e) => e.name).map((e) => "required this.$e").join(", ")}});
+          
+          factory $token.fromJson(Map<String, dynamic> json) => _\$${token}FromJson(json);
+          
+          Map<String, dynamic> toJson() => _\$${token}ToJson(this);
+      }
+""";
     final buffer = StringBuffer();
     buffer.writeln("@JsonSerializable()");
     buffer.writeln("class $token {");
@@ -71,12 +83,16 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
 
   @override
   String toDart(GraphQlGrammar grammar) {
-    return """
-      
-      class $token ${interfaceNames.isEmpty ? '' : 'extends '} ${interfaceNames.join(" ")} {
-          ${serializeListText(fields.map((e) => e.toDart(grammar)).toList(), join: "\n\r", withParenthesis: false)}
+    return """@JsonSerializable()
+      class $token {
+          ${serializeListText(fields.map((e) => e.toDart(grammar)).toList(), join: "\n\r          ", withParenthesis: false)}
+          
+          $token({${fields.map((e) => e.name).map((e) => "required this.$e").join(", ")}});
+          
+          factory $token.fromJson(Map<String, dynamic> json) => _\$${token}FromJson(json);
+          
+          Map<String, dynamic> toJson() => _\$${token}ToJson(this);
       }
-      
     """;
   }
 

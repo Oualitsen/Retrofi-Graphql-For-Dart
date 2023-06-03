@@ -75,8 +75,8 @@ void main() async {
       expect(parsed.isSuccess, true);
 
       final frag = g.fragments["AddressFragment"]!;
-      expect(frag.dependecies.map((e) => e.fragmentName),
-          containsAll(["StateFragment"]));
+      expect(
+          frag.dependecies.map((e) => e.token), containsAll(["StateFragment"]));
       expect(g.fragments.length, greaterThanOrEqualTo(2));
     });
   });
