@@ -37,31 +37,6 @@ class GQInputDefinition extends GQTokenWithFields implements DartSerializable {
           Map<String, dynamic> toJson() => _\$${token}ToJson(this);
       }
 """;
-    final buffer = StringBuffer();
-    buffer.writeln("@JsonSerializable()");
-    buffer.writeln("class $token {");
-    // declare fields
-
-    for (var element in fields) {
-      buffer.writeln(element.toDart(grammar));
-    }
-
-    // declare the constuctor
-
-    buffer.write("$token({");
-    for (int i = 0; i < fields.length; i++) {
-      final element = fields[i];
-      buffer.write("required this.${element.name}, ");
-    }
-    buffer.writeln("});");
-
-    buffer.writeln(
-        "factory $token.fromJson(Map<String, dynamic> json) => _\$${token}FromJson(json);");
-    buffer.writeln("Map<String, dynamic> toJson() => _\$${token}ToJson(this);");
-
-    buffer.writeln("}");
-
-    return buffer.toString();
   }
 }
 

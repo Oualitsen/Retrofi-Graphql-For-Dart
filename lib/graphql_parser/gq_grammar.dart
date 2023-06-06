@@ -28,7 +28,9 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   });
 
   @override
-  Parser start() => ref0(fullGrammar).end();
+  Parser start() {
+    return ref0(fullGrammar).end();
+  }
 
   // write the full grammar here
 
@@ -55,8 +57,8 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
 
   void _onDone() {
     updateFragmentDependencies();
+    checkFragmentRefs();
     updateInterfaceParents();
-    updateDirectives();
     fillTypedFragments();
     createProjectedTypes();
   }
@@ -162,7 +164,6 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
                     ref0(closeBrace))
                 .map3((p0, fieldList, p2) => fieldList))
         .map4((_, name, directives, fields) {
-      print("input definition");
       final input = GQInputDefinition(name: name, fields: fields);
       addInputDefinition(input);
       return input;
@@ -467,8 +468,8 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
           .flatten()
           .map(double.parse);
 
-  Parser<dynamic> constantType() =>
-      intParser() | doubleParser() | stringToken() | boolean();
+  Parser<Object> constantType() =>
+      [intParser(), doubleParser(), stringToken(), boolean()].toChoiceParser();
 
   Parser<String> scalarDefinition() =>
       (ref1(token, "scalar") & ref1(token, identifier()) & directiveValueList())
@@ -516,22 +517,41 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
   }
 
   Parser<GQProjection> plainFragmentField() {
-    return seq4(
-            (seq2(
+    if (firstPass) {
+      return seq4(
+              (seq2(
+                identifier(),
+                colon(),
+              ).map2((alias, _) => alias)).optional(),
               identifier(),
-              colon(),
-            ).map2((alias, _) => alias)).optional(),
-            identifier(),
-            directiveValueList(),
-            ref0(fragmentBlock).optional())
-        .map4((alias, token, directives, block) => GQProjection(
-              token: token,
-              fragmentName: null,
-              alias: alias,
-              isFragmentReference: false,
-              block: block,
-              directives: directives,
-            ));
+              directiveValueList(),
+              ref0(fragmentBlock).optional())
+          .map4((alias, token, directives, block) => GQProjection(
+                token: token,
+                fragmentName: null,
+                alias: alias,
+                isFragmentReference: false,
+                block: block,
+                directives: directives,
+              ));
+    } else {
+      return seq4(
+              (seq2(
+                identifier(),
+                colon(),
+              ).map2((alias, _) => alias)).optional(),
+              identifier(),
+              directiveValueList(),
+              ref0(fragmentBlock).optional())
+          .map4((alias, token, directives, block) => GQProjection(
+                token: token,
+                fragmentName: null,
+                alias: alias,
+                isFragmentReference: false,
+                block: block,
+                directives: directives,
+              ));
+    }
   }
 
   Parser<GQProjection> inlineFragment() {

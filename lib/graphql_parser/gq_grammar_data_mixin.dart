@@ -11,7 +11,8 @@ import 'package:parser/graphql_parser/model/gq_union.dart';
 import 'package:parser/graphql_parser/model/gq_queries.dart';
 
 mixin GrammarDataMixin {
-  static const __typename = "__typename";
+  static const typename = "__typename";
+  bool firstPass = true;
   final Set<String> scalars = {
     "ID",
     "Boolean",
@@ -34,6 +35,10 @@ mixin GrammarDataMixin {
 
   GQSchema schema = GQSchema();
   bool schemaInitialized = false;
+
+  bool isNonProjectableType(String token) {
+    return scalars.contains(token) || enums.containsKey(token);
+  }
 
   void addScalarDefinition(String scalar) {
     checkSacalarDefinition(scalar);
@@ -135,6 +140,17 @@ mixin GrammarDataMixin {
     }
   }
 
+  void checkFragmentRefs() {
+    fragments.forEach((key, typedFragment) {
+      var refs = typedFragment.block.getFragmentReferences();
+      for (var ref in refs) {
+        var referencedFragment = fragments[ref.fragmentName!]!;
+        print(
+            "##### ${referencedFragment.onTypeName} typedFrag = ${typedFragment.onTypeName}");
+      }
+    });
+  }
+
   void checkFragmentDefinition(GQFragmentDefinitionBase fragment) {
     if (fragments.containsKey(fragment.token)) {
       throw ParseException(
@@ -230,12 +246,6 @@ mixin GrammarDataMixin {
     return type;
   }
 
-  void updateDirectives() {
-    /**
-     * @TODO
-     */
-  }
-
   void fillTypedFragments() {
     fragments.forEach((key, fragment) {
       checkIfDefined(fragment.onTypeName);
@@ -250,7 +260,7 @@ mixin GrammarDataMixin {
     typedFragments.forEach((key, value) {
       createprojectedType(value.fragment, value.onType);
     });
-    print("Created types = ${projectedTypes.keys}");
+    print("Created types = ${projectedTypes.keys.toList()}");
   }
 
   void createprojectedType(
@@ -268,11 +278,19 @@ mixin GrammarDataMixin {
 
   GQTypeDefinition createProjectedTypeWithProjectionBlock(
       GQTypeDefinition nonProjectedType, GQFragmentBlockDefinition block) {
-    print("Creating a type using a projection block");
+    var fields = [...nonProjectedType.fields];
+    var projections = {...block.projections};
     var name = generateName(nonProjectedType.token, block);
+    block.projections.values
+        .where((element) => element.isFragmentReference)
+        .map((e) => fragments[e.fragmentName!]!)
+        .forEach((frag) {
+      projections.addAll(frag.block.projections);
+    });
+
     var result = GQTypeDefinition(
         name: name,
-        fields: applyProjection(nonProjectedType.fields, block.projections),
+        fields: applyProjection(fields, projections),
         interfaceNames: {},
         directives: []);
 
@@ -284,7 +302,10 @@ mixin GrammarDataMixin {
     var name = "${originalName}_${block.uniqueName}";
     String? indexedName;
     int nameIndex = 0;
-    while (projectedTypes.containsKey(name)) {
+    if (projectedTypes.containsKey(name)) {
+      indexedName = "${name}_${++nameIndex}";
+    }
+    while (projectedTypes.containsKey(indexedName)) {
       indexedName = "${name}_${++nameIndex}";
     }
     return indexedName ?? name;
@@ -296,6 +317,7 @@ mixin GrammarDataMixin {
     for (var field in src) {
       var projection = projections[field.name];
       if (projection != null) {
+        print("Applying projection to field ${field.name}");
         result.add(applyProjectionToField(field, projection));
       }
     }
@@ -306,14 +328,15 @@ mixin GrammarDataMixin {
   GQField applyProjectionToField(GQField field, GQProjection projection) {
     final String fieldName = projection.alias ?? field.name;
     if (projection.isFragmentReference) {
-      print("fragment reference fragment name is ${projection.fragmentName}");
+      print(
+          "######%%%%%%%%%%%%%%%%%%%%%%%%%%fragment reference fragment name is ${projection.fragmentName}");
       /**
        * @TODO we should first create another type using the fragment name before
        */
     }
 
     if (projection.block != null) {
-      print("@@@@@@@@@@@@@@@ block not null");
+      print("Projection block is not null for field ${field.name}");
       //we should create another type here ...
       var generatedType = createProjectedTypeWithProjectionBlock(
           getType(field.type.token), projection.block!);

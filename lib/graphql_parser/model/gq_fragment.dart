@@ -228,4 +228,10 @@ class GQFragmentBlockDefinition {
     keys.sort();
     return keys.join("_");
   }
+
+  List<GQProjection> getFragmentReferences() {
+    return projections.values
+        .where((projection) => projection.isFragmentReference)
+        .toList();
+  }
 }

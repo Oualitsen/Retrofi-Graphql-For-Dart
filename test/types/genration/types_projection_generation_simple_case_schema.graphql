@@ -1,5 +1,9 @@
 
-
+input UserInput {
+     firstName: String!
+    lastName: String!
+    dateOfBirth: Int
+}
 
 type User {
     firstName: String!
@@ -38,6 +42,9 @@ fragment UserAddressFragment on UserAddress {
         }
     }
 }
+
+
+
 
 fragment UserFragment on User {
     firstName address {
