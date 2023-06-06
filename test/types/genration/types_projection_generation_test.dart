@@ -42,4 +42,37 @@ void main() {
 
 """);
   });
+
+  test("All Fields fragment generation", () {
+    final GraphQlGrammar g = GraphQlGrammar();
+    var parser = g.buildFrom(g.start());
+
+    var parsed = parser.parse(File(
+            "test/types/genration/types_all_fields_fragments_generation.graphql")
+        .readAsStringSync());
+    print("g.projectedTypes.length = ${g.projectedTypes.length}");
+    expect(parsed.isSuccess, true);
+    expect(g.allFieldsFragments.isEmpty, false);
+    print("""
+    _______________ projected types _________________
+    ${g.allFieldsFragments.values.map((e) => e.fragment.serialize()).toList()}
+    _________________________________________________
+
+""");
+  });
+
+  test("test add all fields fragments to fragment depencies", () {
+    final GraphQlGrammar g = GraphQlGrammar();
+    var parser = g.buildFrom(g.start());
+
+    var parsed = parser.parse(File(
+            "test/types/genration/types_all_fields_fragments_dependecies.graphql")
+        .readAsStringSync());
+    expect(parsed.isSuccess, true);
+    expect(
+        g.fragments["UserFields"]!.dependecies
+            .map((e) => e.token)
+            .contains("Address"),
+        true);
+  });
 }

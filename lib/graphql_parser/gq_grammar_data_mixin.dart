@@ -23,6 +23,12 @@ mixin GrammarDataMixin {
   };
   final Map<String, GQFragmentDefinitionBase> fragments = {};
   final Map<String, GQTypedFragment> typedFragments = {};
+
+  ///
+  /// key is the type name
+  /// and value gives a fragment that has references of all fields
+  ///
+  final Map<String, GQTypedFragment> allFieldsFragments = {};
   final Map<String, GQUnionDefinition> unions = {};
   final Map<String, GQInputDefinition> inputs = {};
   final Map<String, GQTypeDefinition> types = {};
@@ -216,6 +222,23 @@ mixin GrammarDataMixin {
     }
   }
 
+  void updateFragmentAllTypesDependecies() {
+    fragments.forEach((key, fragment) {
+      fragment.block.projections.values
+          .where((projection) => projection.block == null)
+          .forEach((projection) {
+        var type = types[fragment.onTypeName]!;
+        var field = type.fields
+            .where((element) => element.name == projection.token)
+            .first;
+        if (types.containsKey(field.type.token)) {
+          fragment.dependecies
+              .add(allFieldsFragments[field.type.token]!.fragment);
+        }
+      });
+    });
+  }
+
   void updateFragmentDependencies() {
     fragments.forEach((key, value) {
       value.updateDepencies(fragments);
@@ -251,6 +274,26 @@ mixin GrammarDataMixin {
       checkIfDefined(fragment.onTypeName);
       typedFragments[key] =
           GQTypedFragment(fragment, types[fragment.onTypeName]!);
+    });
+  }
+
+  void createAllFieldsFragments() {
+    types.forEach((key, value) {
+      allFieldsFragments[key] = GQTypedFragment(
+          GQFragmentDefinition(
+              key,
+              value.token,
+              GQFragmentBlockDefinition(value.fields
+                  .map((e) => GQProjection(
+                      fragmentName: null,
+                      token: e.name,
+                      alias: null,
+                      isFragmentReference: false,
+                      block: null,
+                      directives: []))
+                  .toList()),
+              []),
+          value);
     });
   }
 

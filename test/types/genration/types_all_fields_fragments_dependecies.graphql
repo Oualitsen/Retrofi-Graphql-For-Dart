@@ -1,0 +1,16 @@
+
+
+
+type User {
+    firstName: String!
+    lastName: String!
+    address: Address!
+}
+
+type Address {
+    city: String
+}
+
+fragment UserFields on User {
+    firstName address
+}
