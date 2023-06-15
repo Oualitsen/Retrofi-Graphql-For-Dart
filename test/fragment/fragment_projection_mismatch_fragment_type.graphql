@@ -1,0 +1,38 @@
+
+
+
+type User  {
+
+    firstName: String!
+    lastName: String!
+    
+}
+
+type Address {
+    street: String
+    state: String
+    zipCode: String
+}
+
+fragment AddressFragment on Address {
+    street state
+}
+
+fragment UserFragment on User {
+    ... AddressFragment
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

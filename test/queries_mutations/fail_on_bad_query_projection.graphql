@@ -1,0 +1,22 @@
+
+
+type Product {
+  id: ID!
+  name: String!
+  price: Float!
+  wasPrice: Float
+}
+
+
+type Query {
+  getAllProducts(): [Product!]!
+}
+
+query Product($pageIndex: PageIndex!) {
+  getAllProducts {
+    id, name, price, wasPrice, test
+  }
+}
+
+
+

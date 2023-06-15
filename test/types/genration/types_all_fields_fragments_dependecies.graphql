@@ -12,5 +12,9 @@ type Address {
 }
 
 fragment UserFields on User {
-    firstName address
+    firstName address {... AddressFields}
+}
+
+fragment AddressFields on Address {
+    city
 }

@@ -1,0 +1,60 @@
+
+input PageIndex {
+  index: Int!
+  page: Int!
+}
+
+type Product {
+  id: ID!
+  name: String!
+  price: Float!
+  wasPrice: Float
+}
+
+input ProductInput {
+  name: String!
+  price: Float!
+  wasPrice: Float
+}
+
+type Query {
+
+  getProducts(pageIndex: PageIndex): [Product!]!
+  getProductById(id: ID!): Product!
+
+  getAllProducts(): [Product!]!
+
+}
+
+type Mutation {
+  createProduct(input: ProductInput!): Product!
+  deleteProduct(id: ID!): Product!
+}
+
+query Product($pageIndex: PageIndex!) {
+
+  getProducts(pageIndex: $pageIndex) {
+    id, name, price, wasPrice
+  }
+
+}
+
+query Product {
+
+  getAllProducts {
+    id name
+  }
+
+}
+
+
+mutation ProductMutations($id: ID!, $input: ProductInput!) {
+  createProduct(input: $input) {
+    id name
+  }
+
+  deleteProduct(id: $id) {
+    id
+  }
+}
+

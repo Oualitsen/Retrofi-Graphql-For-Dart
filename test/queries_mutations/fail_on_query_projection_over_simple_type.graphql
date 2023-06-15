@@ -1,0 +1,22 @@
+
+
+type Product {
+  id: ID!
+  name: String!
+  price: Float!
+  wasPrice: Float
+}
+
+
+type Query {
+  getProductCount(): Int!
+}
+
+query Product($pageIndex: PageIndex!) {
+  getProductCount {
+    id
+  }
+}
+
+
+

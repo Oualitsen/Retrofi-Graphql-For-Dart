@@ -1,0 +1,34 @@
+
+
+
+type User {
+    firstName: String!
+    lastName: String!
+    address: Address!
+}
+
+type Address {
+    street: String!
+    zipCode: String!
+    city: String
+    state: State!
+}
+
+
+
+type State {
+    name: String!
+    surface: Int!
+    lat: Float!
+    lng: Float!
+}
+
+fragment UserFrag on User {
+    firstName lastName address
+}
+
+
+
+
+
+

@@ -2,7 +2,7 @@ type Address {
     street: String!
     city: City!
     zipCode: String
-    state: String
+    state: State
 }
 
 

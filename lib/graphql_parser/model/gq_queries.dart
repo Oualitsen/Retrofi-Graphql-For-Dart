@@ -2,18 +2,20 @@ import 'package:parser/graphql_parser/model/gq_directive.dart';
 import 'package:parser/graphql_parser/model/gq_argument.dart';
 import 'package:parser/graphql_parser/model/gq_fragment.dart';
 import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
+import 'package:parser/graphql_parser/model/gq_input_type.dart';
 import 'package:parser/graphql_parser/model/gq_token.dart';
+import 'package:parser/graphql_parser/model/gq_type.dart';
 import 'package:parser/graphql_parser/utils.dart';
 
 enum GQQueryType { query, mutation, subscription }
 
-class GQDefinition extends GQToken {
+class GQQueryDefinition extends GQToken {
   final List<GQDirectiveValue> directives;
   final List<GQArgumentDefinition> arguments;
   final List<GQQueryElement> elements;
-  final GQQueryType type;
+  final GQQueryType type; //query|mutation|subscription
 
-  GQDefinition(
+  GQQueryDefinition(
       super.token, this.directives, this.arguments, this.elements, this.type) {
     checkVariables();
   }
@@ -56,13 +58,21 @@ class GQDefinition extends GQToken {
 }
 
 class GQQueryElement extends GQToken {
-  final List<GQDirectiveValue> list;
+  final List<GQDirectiveValue> directives;
   final GQFragmentBlockDefinition? block;
   final List<GQArgumentValue> arguments;
 
-  GQQueryElement(super.token, this.list, this.block, this.arguments);
+  ///
+  ///This is unknown on parse time. It is filled on run time.
+  ///
+  late final GQType returnType;
 
-  List<GQDirectiveValue> get directives => list;
+  ///
+  ///This is unknown on parse time. It is filled on run time.
+  ///
+  late final GQTypeDefinition? projectedType;
+
+  GQQueryElement(super.token, this.directives, this.block, this.arguments);
 
   @override
   String serialize() {

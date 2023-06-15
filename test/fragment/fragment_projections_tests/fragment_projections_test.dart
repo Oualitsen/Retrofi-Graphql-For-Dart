@@ -18,10 +18,11 @@ void main() async {
       final parsed = parser.parse(text);
 
       expect(parsed.isSuccess, true);
-      var type = g.getType("Person_PersonFragment");
-      expect(type.fieldNames,
-          containsAll(["firstName", "lastName", "middleName"]));
-      expect(type.fieldNames, isNot(containsAll(["age"])));
+      var type = g.typedFragments["PersonFragment"];
+      var fieldNames =
+          type!.fragment.block.projections.values.map((e) => e.token);
+      expect(fieldNames, containsAll(["firstName", "lastName", "middleName"]));
+      expect(fieldNames, isNot(containsAll(["age"])));
     });
 
     test("Block test", () {

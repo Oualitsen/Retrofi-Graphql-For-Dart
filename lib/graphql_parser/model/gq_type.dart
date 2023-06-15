@@ -13,7 +13,7 @@ class GQType extends GQToken {
 
   @override
   String toString() {
-    return '';
+    return serialize();
   }
 
   String toDartType(Map<String, String> typeMapping) {
@@ -28,11 +28,15 @@ class GQType extends GQToken {
 
   String get nullableText => nullable ? "" : "!";
   String get nullableTextDart => nullable ? "?" : "";
+
+  GQType get inlineType => this;
 }
 
 class GQListType extends GQType {
+  ///this could be an instance of GQListType
   final GQType type;
-  GQListType(this.type, bool nullable) : super("", nullable);
+  GQListType(this.type, bool nullable)
+      : super("#List[${type.serialize()}]", nullable, isScalar: false);
 
   @override
   String serialize() {
@@ -40,7 +44,15 @@ class GQListType extends GQType {
   }
 
   @override
+  String toString() {
+    return serialize();
+  }
+
+  @override
   String toDartType(Map<String, String> typeMapping) {
     return "List<${type.toDartType(typeMapping)}>$nullableTextDart";
   }
+
+  @override
+  GQType get inlineType => type.inlineType;
 }

@@ -23,7 +23,7 @@ class GQField extends DartSerializable {
 
   @override
   String toString() {
-    return 'GraphqlField{name: $name, type: $type, initialValue: $initialValue, documentation: $documentation, arguments: $arguments}';
+    return 'GraphqlField{name: $name, type: ${type.serialize()}, initialValue: $initialValue, documentation: $documentation, arguments: $arguments}';
   }
 
   @override

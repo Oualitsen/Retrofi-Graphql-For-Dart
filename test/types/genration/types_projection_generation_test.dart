@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
 import 'package:parser/graphql_parser/gq_grammar.dart';
 
 void main() {
@@ -70,9 +71,21 @@ void main() {
         .readAsStringSync());
     expect(parsed.isSuccess, true);
     expect(
-        g.fragments["UserFields"]!.dependecies
+        g
+            .getFragment("UserFields")
+            .dependecies
             .map((e) => e.token)
-            .contains("Address"),
+            .contains("AddressFields"),
         true);
+  });
+
+  test("test projection validation", () {
+    final GraphQlGrammar g = GraphQlGrammar();
+    var parser = g.buildFrom(g.start());
+    expect(
+        () => parser.parse(
+            File("test/types/genration/types_projection_validation.graphql")
+                .readAsStringSync()),
+        throwsA(isA<ParseException>()));
   });
 }

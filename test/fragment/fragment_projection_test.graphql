@@ -1,0 +1,50 @@
+
+interface UserBase {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    address: Address
+}
+
+type User implements UserBase {
+
+    firstName: String!
+    lastName: String!
+    middleName: String
+    address: Address
+
+    username: String
+}
+
+type Address {
+    street: String
+    state: String
+    zipCode: String
+}
+
+fragment AddressFragment on Address {
+    street state
+}
+
+fragment UserFragment on User {
+    ... UserBaseFragment
+}
+
+fragment UserBaseFragment on User {
+    firstName lastName address {
+        ... AddressFragment
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

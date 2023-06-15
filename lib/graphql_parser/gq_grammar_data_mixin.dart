@@ -12,7 +12,6 @@ import 'package:parser/graphql_parser/model/gq_queries.dart';
 
 mixin GrammarDataMixin {
   static const typename = "__typename";
-  bool firstPass = true;
   final Set<String> scalars = {
     "ID",
     "Boolean",
@@ -24,6 +23,8 @@ mixin GrammarDataMixin {
   final Map<String, GQFragmentDefinitionBase> fragments = {};
   final Map<String, GQTypedFragment> typedFragments = {};
 
+  late final Map<String, String> typeMap;
+
   ///
   /// key is the type name
   /// and value gives a fragment that has references of all fields
@@ -33,9 +34,9 @@ mixin GrammarDataMixin {
   final Map<String, GQInputDefinition> inputs = {};
   final Map<String, GQTypeDefinition> types = {};
   final Map<String, GQInterfaceDefinition> interfaces = {};
-  final Map<String, GQDefinition> queries = {};
-  final Map<String, GQDefinition> mutations = {};
-  final Map<String, GQDefinition> subscriptions = {};
+  final Map<String, List<GQQueryDefinition>> queries = {};
+  final Map<String, List<GQQueryDefinition>> mutations = {};
+  final Map<String, List<GQQueryDefinition>> subscriptions = {};
   final Map<String, GQEnumDefinition> enums = {};
   final Map<String, GQTypeDefinition> projectedTypes = {};
 
@@ -87,9 +88,8 @@ mixin GrammarDataMixin {
     enums[enumDefinition.token] = enumDefinition;
   }
 
-  void addQueryDefinition(GQDefinition definition) {
-    checkQueryDefinition(definition.token, definition.type);
-    Map<String, GQDefinition> map;
+  void addQueryDefinition(GQQueryDefinition definition) {
+    Map<String, List<GQQueryDefinition>> map;
     switch (definition.type) {
       case GQQueryType.query:
         map = queries;
@@ -101,8 +101,39 @@ mixin GrammarDataMixin {
         map = subscriptions;
         break;
     }
+    var currentList = map[definition.token] ?? [];
+    currentList.add(definition);
 
-    map[definition.token] = definition;
+    map[definition.token] = currentList;
+  }
+
+  fillQueryElementsReturnType() {
+    queries.forEach((name, queryList) {
+      for (var queryDefinition in queryList) {
+        for (var element in queryDefinition.elements) {
+          element.returnType =
+              getTypeFromFieldName(element.token, schema.query);
+        }
+      }
+    });
+
+    mutations.forEach((name, queryList) {
+      for (var queryDefinition in queryList) {
+        for (var element in queryDefinition.elements) {
+          element.returnType =
+              getTypeFromFieldName(element.token, schema.mutation);
+        }
+      }
+    });
+
+    subscriptions.forEach((name, queryList) {
+      for (var queryDefinition in queryList) {
+        for (var element in queryDefinition.elements) {
+          element.returnType =
+              getTypeFromFieldName(element.token, schema.subscription);
+        }
+      }
+    });
   }
 
   void checmEnumDefinition(GQEnumDefinition enumDefinition) {
@@ -127,6 +158,7 @@ mixin GrammarDataMixin {
 
   void checkIfDefined(String typeName) {
     if (types.containsKey(typeName) ||
+        interfaces.containsKey(typeName) ||
         enums.containsKey(typeName) ||
         scalars.contains(typeName)) {
       return;
@@ -222,21 +254,162 @@ mixin GrammarDataMixin {
     }
   }
 
+  void validateProjections() {
+    validateFragmentProjections();
+    validateQueryDefinitionProjections();
+  }
+
+  List<GQQueryElement> getAllElements() {
+    List<GQQueryDefinition> l1 =
+        queries.values.expand((element) => element).toList();
+    List<GQQueryDefinition> l2 =
+        mutations.values.expand((element) => element).toList();
+    List<GQQueryDefinition> l3 =
+        subscriptions.values.expand((element) => element).toList();
+    return [...l1, ...l2, ...l3].expand((q) => q.elements).toList();
+  }
+
+  void validateQueryDefinitionProjections() {
+    getAllElements().forEach((element) {
+      var inlineType = element.returnType.inlineType;
+      var requiresProjection = typeRequiresProjection(inlineType);
+      //check if projection should be applied
+      if (requiresProjection && element.block == null) {
+        throw ParseException("A projection is need on ${inlineType.token}");
+      } else if (!requiresProjection && element.block != null) {
+        throw ParseException("A projection is not need on ${inlineType.token}");
+      }
+
+      if (element.block != null) {
+        //validate projections with return type
+        validateQueryProjection(element.returnType, element.block!);
+      }
+    });
+  }
+
+  void validateQueryProjection(GQType type, GQFragmentBlockDefinition block) {
+    block.projections.forEach((key, projection) {
+      var inlineType = type.inlineType;
+      var declaredType = getType(inlineType.token);
+      var list = declaredType.fields.where((f) => f.name == projection.token);
+      if (list.isEmpty) {
+        throw ParseException(
+            "Cannot find field '${projection.token}' in type '${inlineType.token}'");
+      }
+    });
+  }
+
+  void validateFragmentProjections() {
+    fragments.forEach((key, fragment) {
+      fragment.block.projections.forEach((key, projection) {
+        validateProjection(projection, fragment.onTypeName, fragment.token);
+      });
+    });
+  }
+
+  void validateProjection(
+      GQProjection projection, String typeName, String? fragmentName) {
+    print(
+        "Validating projection ${projection.isFragmentReference} ======== ${projection.token}");
+    if (projection.isFragmentReference) {
+      var fragment = getFragment(projection.token);
+      var type = getType(typeName);
+      if (fragment.onTypeName != type.token &&
+          !type.interfaceNames.contains(fragment.onTypeName)) {
+        throw ParseException(
+            "Fragment ${fragment.token} cannot be applied to type ${type.token}");
+      }
+    } else {
+      var requiresProjection =
+          fieldRequiresProjection(projection.token, typeName);
+      if (requiresProjection && projection.block == null) {
+        throw ParseException(
+            "Field '${projection.token}' of type '$typeName' must have a selection of subfield ${fragmentName == null ? "" : "Fragment: '$fragmentName'"}");
+      }
+      if (!requiresProjection && projection.block != null) {
+        throw ParseException(
+            "Field '${projection.token}' of type '$typeName' should not have a selection of subfields ${fragmentName == null ? "" : "Fragment: '$fragmentName'"}");
+      }
+    }
+  }
+
+  bool fieldRequiresProjection(String fieldName, String onTypeName) {
+    checkIfDefined(onTypeName);
+    GQType type = getFieldType(fieldName, onTypeName);
+    return typeRequiresProjection(type);
+  }
+
+  bool typeRequiresProjection(GQType type) {
+    try {
+      getType(type.token);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  GQType getFieldType(String fieldName, String typeName) {
+    var onType = getType(typeName);
+
+    var result = onType.fields.where((element) => element.name == fieldName);
+    if (result.isEmpty && fieldName != typename) {
+      throw ParseException(
+          "Could not find field '$fieldName' on type '$typeName'");
+    } else {
+      if (result.isNotEmpty) {
+        return result.first.type;
+      } else {
+        return GQType(getLangType("String"), false);
+      }
+    }
+  }
+
   void updateFragmentAllTypesDependecies() {
     fragments.forEach((key, fragment) {
       fragment.block.projections.values
           .where((projection) => projection.block == null)
           .forEach((projection) {
-        var type = types[fragment.onTypeName]!;
-        var field = type.fields
-            .where((element) => element.name == projection.token)
-            .first;
-        if (types.containsKey(field.type.token)) {
-          fragment.dependecies
-              .add(allFieldsFragments[field.type.token]!.fragment);
+        if (projection.isFragmentReference) {
+          var fragmentRef = getFragment(projection.token);
+          fragment.dependecies.add(fragmentRef);
+        } else {
+          var type = getType(fragment.onTypeName);
+          var field = findFieldByName(projection.token, type);
+          if (types.containsKey(field.type.token)) {
+            fragment.dependecies
+                .add(allFieldsFragments[field.type.token]!.fragment);
+          }
         }
       });
     });
+  }
+
+  GQField findFieldByName(String fieldName, GQTokenWithFields dataType) {
+    var filtered = dataType.fields.where((f) => f.name == fieldName);
+    if (filtered.isEmpty) {
+      if (fieldName == typename) {
+        return GQField(
+            name: fieldName,
+            type: GQType(getLangType("String"), false),
+            arguments: []);
+      } else {
+        throw ParseException(
+            "Could not find field '$fieldName' on type ${dataType.token}");
+      }
+    }
+    return filtered.first;
+  }
+
+  GQType getTypeFromFieldName(String fieldName, String typeName) {
+    var type = getType(typeName);
+
+    var fields =
+        type.fields.where((element) => element.name == fieldName).toList();
+    if (fields.isEmpty) {
+      throw ParseException(
+          "$typeName does not declare a field with name $fieldName");
+    }
+    return fields.first.type;
   }
 
   void updateFragmentDependencies() {
@@ -246,25 +419,25 @@ mixin GrammarDataMixin {
   }
 
   GQTypeDefinition getType(String name) {
-    final type = types[name];
+    final type = types[name] ?? interfaces[name];
     if (type == null) {
-      throw ParseException("Type $name has was not found");
+      throw ParseException("No type or interface '$name' defined");
     }
     return type;
   }
 
   GQFragmentDefinitionBase getFragment(String name) {
-    final type = fragments[name];
-    if (type == null) {
-      throw ParseException("Fragment $name has was not found");
+    final fragment = fragments[name];
+    if (fragment == null) {
+      throw ParseException("Fragment '$name' was not found");
     }
-    return type;
+    return fragment;
   }
 
   GQInterfaceDefinition getInterface(String name) {
     final type = interfaces[name];
     if (type == null) {
-      throw ParseException("Interface $name has was not found");
+      throw ParseException("Interface $name was not found");
     }
     return type;
   }
@@ -273,7 +446,7 @@ mixin GrammarDataMixin {
     fragments.forEach((key, fragment) {
       checkIfDefined(fragment.onTypeName);
       typedFragments[key] =
-          GQTypedFragment(fragment, types[fragment.onTypeName]!);
+          GQTypedFragment(fragment, getType(fragment.onTypeName));
     });
   }
 
@@ -298,15 +471,35 @@ mixin GrammarDataMixin {
   }
 
   void createProjectedTypes() {
-    print("####### typedFagments = (${typedFragments.length})");
-
     typedFragments.forEach((key, value) {
-      createprojectedType(value.fragment, value.onType);
+      createProjectedType(value.fragment, value.onType);
     });
-    print("Created types = ${projectedTypes.keys.toList()}");
+
+    //create for queries, mutations and subscriptions
+    getAllElements().where((e) => e.block != null).forEach((element) {
+      print("generating new type ....");
+      var newType =
+          createProjectedTypeForQuery(element.returnType, element.block!);
+      print("generated type ${newType.token}");
+      element.projectedType = newType;
+    });
   }
 
-  void createprojectedType(
+  GQTypeDefinition createProjectedTypeForQuery(
+      GQType type, GQFragmentBlockDefinition block) {
+    var onType = getType(type.inlineType.token);
+    var name = generateName(onType.token, block);
+    var newType = GQTypeDefinition(
+        name: name,
+        fields: applyProjection(onType.fields, block.projections),
+        interfaceNames: onType.interfaceNames,
+        directives: onType.directives);
+
+    projectedTypes[name] = newType;
+    return newType;
+  }
+
+  void createProjectedType(
       GQFragmentDefinitionBase fragment, GQTypeDefinition onType) {
     var name = "${fragment.token}_on_${onType.token}";
 
@@ -360,7 +553,6 @@ mixin GrammarDataMixin {
     for (var field in src) {
       var projection = projections[field.name];
       if (projection != null) {
-        print("Applying projection to field ${field.name}");
         result.add(applyProjectionToField(field, projection));
       }
     }
@@ -397,7 +589,11 @@ mixin GrammarDataMixin {
     );
   }
 
-  GQTokenWithFields? getTypeOrInterfaceDefinition(String name) {
-    return types[name] ?? interfaces[name];
+  String getLangType(String typeName) {
+    var result = typeMap[typeName];
+    if (result == null) {
+      throw ParseException("Unknown type $typeName");
+    }
+    return result;
   }
 }

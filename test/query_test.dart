@@ -17,7 +17,7 @@ void main() {
     expect(result.isSuccess, true);
   });
 
-  test("Query  test", () {
+  test("Query definition test", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
     var parser = g.buildFrom(g.queryDefinition(GQQueryType.query).end());
@@ -33,7 +33,7 @@ void main() {
     expect(result.isSuccess, true);
   });
 
-  test("Query  test", () {
+  test("Query definition test 2", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
     var parser = g.buildFrom(g.queryDefinition(GQQueryType.mutation).end());
@@ -49,7 +49,7 @@ void main() {
     expect(result.isSuccess, true);
   });
 
-  test("Query  test", () {
+  test("Query definition test 3", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
     var parser = g.buildFrom(g.queryDefinition(GQQueryType.query).end());
@@ -66,7 +66,7 @@ void main() {
     print((result.value).serialize());
   });
 
-  test("Query  test", () {
+  test("Query definition test 4", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
     var parser = g.buildFrom(g.queryDefinition(GQQueryType.subscription).end());

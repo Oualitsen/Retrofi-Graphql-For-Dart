@@ -1,21 +1,19 @@
 import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:parser/graphql_parser/model/dart_serializable.dart';
-import 'package:parser/graphql_parser/model/gq_directive.dart';
-import 'package:parser/graphql_parser/model/gq_field.dart';
-import 'package:parser/graphql_parser/model/gq_token.dart';
+import 'package:parser/graphql_parser/model/gq_input_type.dart';
 
-class GQInterfaceDefinition extends GQTokenWithFields
+class GQInterfaceDefinition extends GQTypeDefinition
     implements DartSerializable {
   final Set<GQInterfaceDefinition> parents = <GQInterfaceDefinition>{};
   final Set<String> parentNames;
-  final Set<GQDirectiveValue> directives;
 
   GQInterfaceDefinition({
-    required String name,
-    required List<GQField> fields,
+    required super.name,
+    required super.fields,
     required this.parentNames,
-    required this.directives,
-  }) : super(name, fields);
+    required super.directives,
+    required super.interfaceNames,
+  });
 
   @override
   String toString() {

@@ -1,7 +1,4 @@
 
-
-
-
 interface UserBase {
     firstName: String!
     lastName: String!
@@ -49,11 +46,7 @@ fragment StateFragment on State {
 }
 
 fragment UserFragment on UserBase {
-    firstName lastName address ... on Address {
-        state city {
-            ... CityFragment
-        }
-    }
+    firstName lastName  
     address {
         ... AddressFragment
     }

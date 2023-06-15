@@ -121,12 +121,12 @@ void main() {
     expect(result.isSuccess, true);
   });
 
-  test("Fragment Definitions", () {
+  test("Fragment Definitions 1", () {
     final GraphQlGrammar g = GraphQlGrammar();
 
     var parser = g.buildFrom(g.fragmentDefinition().end());
     var result = parser.parse('''
-       fragment productFields  on Product @skip(if: true) @include(if: false) {
+        fragment productFields  on Product @skip(if: true) @include(if: false) {
           id @skip(if: true)  name {
             id
           }
@@ -140,10 +140,11 @@ void main() {
     expect(result.isSuccess, true);
   });
 
-  test("Fragment Definitions", () {
+  test("Fragment Definitions 2", () {
     final GraphQlGrammar g = GraphQlGrammar();
     var parser = g.buildFrom(g.fragmentDefinition().end());
     var result = parser.parse('''
+        
        fragment ProductFields  on Product {
           myAliassedId:id  name 
       }
@@ -165,7 +166,7 @@ void main() {
           firstName
     ''');
     expect(result.isSuccess, true);
-    var value = result.value as List<GQProjection>;
+    var value = result.value;
     expect(value[0].alias, equals(null));
     expect(value[1].alias, equals("myAliassedName"));
     expect(value[2].alias, equals(null));
