@@ -86,6 +86,9 @@ class GQQueryDefinition extends GQToken {
             GQField(name: e.token, type: e.returnProjectedType, arguments: []))
         .toList();
   }
+
+  GQArgumentDefinition findByName(String name) =>
+      arguments.where((arg) => arg.token == name).first;
 }
 
 class GQQueryElement extends GQToken {
@@ -128,7 +131,9 @@ class GQQueryElement extends GQToken {
 
   @override
   String serialize() {
-    return """$token ${serializeList(arguments, join: ", ")} ${serializeList(directives, join: " ")}
+    return """$_escapedToken ${serializeList(arguments, join: ", ")} ${serializeList(directives, join: " ")}
       ${block != null ? block!.serialize() : ''}""";
   }
+
+  String get _escapedToken => token.replaceFirst("\$", "\\\$");
 }

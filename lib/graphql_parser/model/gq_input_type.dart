@@ -62,13 +62,20 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
       class $token {
           ${serializeListText(fields.map((e) => e.toDart(grammar)).toList(), join: "\n\r          ", withParenthesis: false)}
           
-          $token({${fields.map((e) => e.name).map((e) => "required this.$e").join(", ")}});
+          $token(${serializeContructorArgs()});
           
           factory $token.fromJson(Map<String, dynamic> json) => _\$${token}FromJson(json);
           
           Map<String, dynamic> toJson() => _\$${token}ToJson(this);
       }
     """;
+  }
+
+  String serializeContructorArgs() {
+    if (fields.isEmpty) {
+      return "";
+    }
+    return "{${fields.map((e) => e.name).map((e) => "required this.$e").join(", ")}}";
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:parser/graphql_parser/model/dart_serializable.dart';
+import 'package:parser/graphql_parser/model/gq_argument.dart';
 import 'package:parser/graphql_parser/model/gq_queries.dart';
 
 class GQGraphqlService implements DartSerializable {
@@ -15,9 +16,9 @@ class GQGraphqlService implements DartSerializable {
 
     class GQClient {
       
-      static final queries = Queries();
-      static final mustations = Mutations();
-      static final subscriptions = Subscriptions();
+       final queries = Queries();
+       final mustations = Mutations();
+       final subscriptions = Subscriptions();
 
 }
     """
@@ -52,10 +53,31 @@ class GQGraphqlService implements DartSerializable {
   String queryToMethod(GQQueryDefinition def, GraphQlGrammar g) {
     return """
       ${returnTypeByQueryType(def, g)} ${def.token}(${generateArgs(def, g)}) {
+        var operationName = "${def.token}";
+        var fragments = \"\"\" ${def.fragments.map((e) => e.serialize()).toList().join(" ")} \"\"\";
+        var q = \"\"\"
+        ${def.serialize()} \$fragments
+        \"\"\";
+
+        var variables = {
+          ${def.arguments.map((e) => "'${e.dartArgumentName}': ${serializeArgumentValue(g, def, e.token)}").toList().join(", ")}
+        };
+        
         return Future.value();
       }
     """
         .trim();
+  }
+
+  String serializeArgumentValue(
+      GraphQlGrammar g, GQQueryDefinition def, String argName) {
+    var arg = def.findByName(argName);
+    String result = arg.dartArgumentName;
+    if (g.inputTypeRequiresProjection(arg.type)) {
+      return "$result.toJson()";
+    } else {
+      return result;
+    }
   }
 
   String generateArgs(GQQueryDefinition def, GraphQlGrammar g) {

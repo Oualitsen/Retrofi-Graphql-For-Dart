@@ -20,12 +20,14 @@ class GQArgumentDefinition extends GQToken {
 
   @override
   String serialize() {
-    var r = "$token: ${type.serialize()}";
+    var r = "$_escappedToken: ${type.serialize()}";
     if (initialValue != null) {
       r += " = $initialValue";
     }
     return r;
   }
+
+  String get _escappedToken => token.replaceFirst("\$", "\\\$");
 }
 
 ///
@@ -40,8 +42,12 @@ class GQArgumentValue extends GQToken {
 
   @override
   String serialize() {
-    return "$token: $value";
+    return "$_escapedToken: $_escapedValue";
   }
+
+  String get _escapedToken => token.replaceFirst("\$", "\\\$");
+
+  String get _escapedValue => "$value".replaceFirst("\$", "\\\$");
 
   @override
   String toString() {

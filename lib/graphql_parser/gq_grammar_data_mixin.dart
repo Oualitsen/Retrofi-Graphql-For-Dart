@@ -401,6 +401,10 @@ $data
     }
   }
 
+  bool inputTypeRequiresProjection(GQType type) {
+    return inputs[type.token] != null;
+  }
+
   GQType getFieldType(String fieldName, String typeName) {
     var onType = getType(typeName);
 

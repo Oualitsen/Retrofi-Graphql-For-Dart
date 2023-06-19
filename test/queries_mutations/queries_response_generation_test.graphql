@@ -26,6 +26,8 @@ type Query {
 
   getCount(): Int!
 
+  getCount2(): Long!
+
 }
 
 type Mutation {
@@ -54,7 +56,7 @@ query getAllProducts {
 
 mutation createProduct($input: ProductInput!) {
   createProduct(input: $input) {
-    id name
+    ... ProductFragment
   }
 }
 
@@ -67,4 +69,9 @@ mutation deleteProduct($id: ID!, $id2: Int) {
   deleteProduct2(id: $id2)
 
   
+}
+
+scalar Long
+fragment ProductFragment on Product {
+  id name price
 }

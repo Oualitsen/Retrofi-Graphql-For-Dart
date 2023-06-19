@@ -11,9 +11,11 @@ String serializeListText(List<String>? list,
   if (list == null || list.isEmpty) {
     return '';
   }
+  String result;
   if (withParenthesis) {
-    return "(${list.join(join)})";
+    result = "(${list.join(join)})";
   } else {
-    return list.join(join);
+    result = list.join(join);
   }
+  return result;
 }
