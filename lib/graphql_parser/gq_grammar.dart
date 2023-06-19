@@ -1,4 +1,5 @@
 import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
+import 'package:parser/graphql_parser/model/gq_enum_definition.dart';
 import 'package:parser/graphql_parser/model/gq_schema.dart';
 import 'package:parser/graphql_parser/model/gq_argument.dart';
 import 'package:parser/graphql_parser/model/gq_comment.dart';
@@ -21,7 +22,8 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
       "Float": "double",
       "Int": "int",
       "Boolean": "bool",
-      "Null": "null"
+      "Null": "null",
+      "Long": "int"
     },
   }) {
     this.typeMap = typeMap;
@@ -262,16 +264,23 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
     });
   }
 
-  Parser enumDefinition() => (ref1(token, "enum") &
-              ref0(identifier) &
-              directiveValueList() &
-              ref0(openBrace) &
-              (ref1(token, documentation().optional()) &
-                      ref1(token, identifier()))
-                  .plus() &
-              ref0(closeBrace))
-          .map((value) {
-        return value;
+  Parser<GQEnumDefinition> enumDefinition() => seq3(
+              seq2(ref1(token, "enum"), ref0(identifier)).map2((p0, id) => id),
+              directiveValueList(),
+              seq3(
+                      ref0(openBrace),
+                      seq2(ref1(token, documentation().optional()),
+                              ref1(token, identifier()))
+                          .map2((comment, value) =>
+                              GQEnumValue(value: value, comment: comment))
+                          .plus(),
+                      ref0(closeBrace))
+                  .map3((p0, list, p2) => list))
+          .map3((identifier, directives, enumValues) {
+        var enumDef = GQEnumDefinition(
+            token: identifier, values: enumValues, list: directives);
+        addEnumDefinition(enumDef);
+        return enumDef;
       });
 
   Parser<List<GQDirectiveValue>> directiveValueList() =>

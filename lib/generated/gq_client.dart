@@ -1,96 +1,66 @@
+import 'enums.dart';
 import 'inputs.dart';
 import 'types.dart';
+import 'dart:convert';
+import 'package:parser/graphql_parser/model/gq_graphql_service.dart';
 
-class Queries {
-  Future<GetProductsResponse> getProducts({required PageIndex pageIndex}) {
-    var operationName = "getProducts";
-    var fragments = """  """;
-    var q = """
-        query getProducts (\$pageIndex: PageIndex!)  {
-        getProducts (pageIndex: \$pageIndex) 
-      {
-      id  name  price  wasPrice 
-    }
+typedef GQHttpClientAdapter = Future<String> Function(String payload);
 
-getCount  
-      
-      }
-     $fragments
-        """;
+    class Queries {
+        final GQHttpClientAdapter adapter;
+        Queries(this.adapter);
+        
 
-    var variables = {'pageIndex': pageIndex.toJson()};
-
-    return Future.value();
-  }
-
-  Future<GetAllProductsResponse> getAllProducts() {
-    var operationName = "getAllProducts";
-    var fragments = """  """;
-    var q = """
-        query getAllProducts   {
-        getAllProducts  
-      {
-      id  name 
-    }
-      }
-     $fragments
-        """;
-
-    var variables = {};
-
-    return Future.value();
-  }
 }
-
 class Mutations {
-  Future<CreateProductResponse> createProduct({required ProductInput input}) {
-    var operationName = "createProduct";
-    var fragments = """       fragment ProductFragment on Product  {
-      id  name  price 
-    } 
-     """;
-    var q = """
-        mutation createProduct (\$input: ProductInput!)  {
-        createProduct (input: \$input) 
+        final GQHttpClientAdapter adapter;
+        Mutations(this.adapter);
+        Future<SavePositionResponse> savePosition({required PositionInput input}) {
+        var operationName = "savePosition";
+        var fragments = """  """;
+        var query = """
+        mutation savePosition (\$input: PositionInput!)  {
+        savePosition (position: \$input) 
       {
-      ... ProductFragment 
+      startTime 
     }
       }
      $fragments
         """;
 
-    var variables = {'input': input.toJson()};
-
-    return Future.value();
-  }
-
-  Future<DeleteProductResponse> deleteProduct(
-      {required String id, required int? id2}) {
-    var operationName = "deleteProduct";
-    var fragments = """  """;
-    var q = """
-        mutation deleteProduct (\$id: ID!, \$id2: Int)  {
-        deleteProduct (id: \$id) 
-      {
-      id  name 
-    }
-
-deleteProduct2 (id: \$id2) 
+        var variables = {
+          'input': input.toJson()
+        };
+        
+        var payload = PayLoad(query: query, operationName: operationName, variables: variables);
+        return adapter(payload.toString()).asStream().map((response) {
+      Map<String, dynamic> result = jsonDecode(response);
+      if (result.containsKey("errors")) {
+        throw result["errors"];
+      }
+      var data = result["data"];
+      return SavePositionResponse.fromJson(data);
       
+    }).first;
+        
       }
-     $fragments
-        """;
 
-    var variables = {'id': id, 'id2': id2};
-
-    return Future.value();
-  }
 }
+class Subscriptions {
+        final GQHttpClientAdapter adapter;
+        Subscriptions(this.adapter);
+        
 
-class Subscriptions {}
+}
 
 class GQClient {
-  final queries = Queries();
-  final mustations = Mutations();
-  final subscriptions = Subscriptions();
+  final GQHttpClientAdapter adapter;
+  late final Queries queries;
+  late final Mutations mutations;
+  late final Subscriptions subscriptions;
+  GQClient(this.adapter) {
+    queries = Queries(adapter);
+    mutations = Mutations(adapter);
+    subscriptions = Subscriptions(adapter);
+  }
 }

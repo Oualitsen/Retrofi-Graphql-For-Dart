@@ -14,8 +14,9 @@ import 'package:parser/graphql_parser/model/gq_type.dart';
 import 'package:parser/graphql_parser/model/gq_union.dart';
 import 'package:parser/graphql_parser/model/gq_queries.dart';
 
-const destFolder = "/Users/M1/personal/typedGraphQLClient/lib/generated";
+const destFolder = "/home/ismahane/Desktop/typedGraphQLClient/lib/generated";
 final String inputFileName = "inputs";
+final String enumsFileName = "enums";
 final String typesFileName = "types";
 final String gqClientFileName = "gq_client";
 
@@ -105,8 +106,18 @@ mixin GrammarDataMixin {
   void saveToFiles(GraphQlGrammar g) {
     createFiles();
     saveInputFile(g);
+    saveEnums(g);
     saveTypesFile(g);
     saveClientFile(g);
+  }
+
+  void saveEnums(GraphQlGrammar g) {
+    var file = File("$destFolder/$enumsFileName.dart");
+
+    var enums = this.enums.values.toList().map((e) => e.toDart(g)).join("\n");
+    file.writeAsStringSync("""
+$enums
+""");
   }
 
   void createFiles() {
@@ -132,7 +143,7 @@ mixin GrammarDataMixin {
     var inputs = this.inputs.values.toList().map((e) => e.toDart(g)).join("\n");
     file.writeAsStringSync("""
   import 'package:json_annotation/json_annotation.dart';
-
+  import '$enumsFileName.dart';
   part '$inputFileName.g.dart';
 
 $inputs
@@ -148,7 +159,7 @@ $inputs
         queries.values.toList().map((e) => e.generate().toDart(g)).join("\n");
     file.writeAsStringSync("""
  import 'package:json_annotation/json_annotation.dart';
-
+ import '$enumsFileName.dart';
   part '$typesFileName.g.dart';
 
 $data
@@ -163,6 +174,7 @@ $data2
 
     var data = service.toDart(g);
     file.writeAsStringSync("""
+import '$enumsFileName.dart';
 import '$inputFileName.dart';
 import '$typesFileName.dart';
 $data

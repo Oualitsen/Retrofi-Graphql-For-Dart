@@ -1,7 +1,9 @@
+import 'package:parser/graphql_parser/gq_grammar.dart';
+import 'package:parser/graphql_parser/model/dart_serializable.dart';
 import 'package:parser/graphql_parser/model/gq_directive.dart';
 import 'package:parser/graphql_parser/model/gq_token.dart';
 
-class GQEnumDefinition extends GQToken {
+class GQEnumDefinition extends GQToken implements DartSerializable {
   List<GQEnumValue> values;
   List<GQDirectiveValue> list;
 
@@ -15,6 +17,15 @@ class GQEnumDefinition extends GQToken {
   }
 
   List<GQDirectiveValue> get directives => list;
+  @override
+  String toDart(GraphQlGrammar grammar) {
+    return """
+   
+      enum $token {
+   ${values.map((e) => e.value).toList().join(", ")}
+      }
+""";
+  }
 }
 
 class GQEnumValue {

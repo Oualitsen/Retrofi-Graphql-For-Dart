@@ -1,0 +1,253 @@
+    scalar Long
+    interface BasicEntity {
+        id: ID!
+       creationDate: Long!
+       lastUpdate: Long!
+    }
+
+    type Query {
+        patientList(pageInfo: PageInfo!): [Patient]
+        medicalStaffList : [MedicalStaff!]!
+        hemodialysisGroupList :[HemodialysisGroup!]!
+        findPatientById (id: ID!): Patient!
+        agencyList(pageInfo:PageInfo!):[Agency]
+    }
+    type Mutation {
+        savePatient(input : PatientInput) : Patient
+        saveHemodialysisGroup(input:HemodialysisGroupInput):HemodialysisGroup
+        savePosition(position :PositionInput) : Position
+        saveMedicalStaff(medicalStaff :MedicalStaffInput) : MedicalStaff
+    }
+    type Agency implements BasicEntity{
+        id: ID!
+        creationDate: Long!
+        lastUpdate: Long!
+        designation:String
+        cashierId:String
+        address:String
+        phones:[String]
+        email:String
+        webSite:String
+    }
+    type Cashier implements BasicEntity{
+        id: ID!
+        lastUpdate: Long!
+        creationDate: Long!
+        code:String
+        designation:String
+        address:String
+        phones:[String]
+        emails:[String]
+        webSite:[String]
+    }
+    type Patient implements BasicEntity{
+        id:ID!
+        creationDate:Long!
+        lastUpdate:Long!
+        person:PersonalInfo
+        patientStatus:String
+        admissionDate:Long!
+        ensurer:Ensurer
+        assignment:Assignment
+    }
+    type HemodialysisGroup implements BasicEntity{
+        id: ID!
+        creationDate:Long!
+        lastUpdate:Long!
+        code : String
+        designation :String
+        daysOfWeek : [String]
+
+    }
+    type Position implements BasicEntity{
+        id: ID!
+        creationDate:Long!
+        lastUpdate:Long!
+        designation:String
+        startTime:Long
+        endTime: Long
+
+    }
+
+
+    type MedicalStaff implements BasicEntity{
+        id: ID!
+        creationDate:Long!
+        lastUpdate:Long!
+        person:PersonalInfo
+        rank:Rank
+    }
+
+    input AgencyInput{
+        id: ID
+        creationDate: Long
+        lastUpdate: Long
+        designation:String
+        cashierId:String
+        address:String
+        phones:[String]
+        email:String
+        webSite:String
+    }
+
+    input CashierInput {
+        id: ID
+        lastUpdate: Long
+        creationDate: Long
+        code:String
+        designation:String
+        address:String
+        phones:[String]
+        emails:[String]
+        webSite:[String]
+    }
+    type PayerCenter{
+        code:String
+        designation:String
+        address:String
+        phones:[String]
+        emails:[String]
+        webSite:String
+    }
+
+    type PersonalInfo{
+        firstName:String!
+        lastName:String!
+        gender:Gender!
+        dateOfBirth:Long!
+        placeOfBirth:String
+        bloodGroup :BloodGroup
+        image:String
+        address:String
+        phones:[String!]!
+        emails:[String!]!
+    }
+    input PersonalInfoInput{
+        firstName:String!
+        lastName:String!
+        gender:Gender!
+        dateOfBirth:Long!
+        placeOfBirth:String
+        bloodGroup :BloodGroup
+        image:String
+        address:String
+        phones:[String!]!
+        emails:[String!]!
+    }
+
+
+    input PatientInput{
+        id:ID
+        personalInfo:PersonalInfoInput
+        patientStatus:PatientStatus
+        admissionDate:Long!
+        ensurer:EnsurerInput
+        assignment:AssignmentInput
+
+    }
+
+    input HemodialysisGroupInput{
+        id: ID
+        creationDate:Long
+        lastUpdate:Long
+        code : String
+        designation :String
+        daysOfWeek : [String]
+    }
+
+    type Assignment{
+        medicalStaff:MedicalStaff
+        hemodialysisGroup:HemodialysisGroup
+        position:Position
+        patientRoom:PatientRoom
+        DateOfFirstIronTreatment:Long
+        DateOfFirstEPOTreatment:Long
+        DateOfTheFirstHemodialysisSession:Long
+    }
+    input AssignmentInput{
+        medicalStaff:EnsurerInput
+        hemodialysisGroup:HemodialysisGroupInput
+        position:PositionInput
+        patientRoom:PatientRoomInput
+        DateOfFirstIronTreatment:Long
+        DateOfFirstEPOTreatment:Long
+        DateOfTheFirstHemodialysisSession:Long
+    }
+
+    input PatientRoomInput{
+        code:String
+        name:String
+        designation:String
+    }
+    type PatientRoom{
+        code:String
+        name:String
+        designation:String
+    }
+
+    input PositionInput{
+        id: ID
+        creationDate:Long
+        lastUpdate:Long
+        designation:String
+        startTime:Long
+        endTime: Long
+    }
+
+    type Ensurer{
+        person:PersonalInfo
+        socialSecurityNumber:String!
+        ensurerRelationship:EnsurerRelationship
+    }
+
+    input EnsurerInput{
+        person:PersonalInfoInput
+        socialSecurityNumber:String
+        ensurerRelationship:EnsurerRelationship
+    }
+
+    input PageInfo {
+        page: Int!
+        size: Int!
+    }
+
+    input MedicalStaffInput{
+        id: ID
+        creationDate:Long
+        lastUpdate:Long
+        person:PersonalInfoInput
+        rank:Rank
+    }
+
+    enum Gender{
+        MAN
+        WOMAN
+    }
+
+    enum Rank{
+        DOCTOR,NURSE,TECHNICIAN
+    }
+
+    enum BloodGroup{
+        A_POSITIF
+        A_NEGATIF
+        B_POSITIF
+        B_NEGATIF
+        AB_POSITIF
+        AB_NEGATIF
+        O_POSITIF
+        O_NEGATIF
+    }
+
+    enum EnsurerRelationship{
+        PATIENT,CHILD, ANCESTOR, PARTNER, OTHER
+    }
+enum  PatientStatus{
+    PERMANANTE
+}
+
+mutation savePosition($input: PositionInput!){
+  savePosition(position:$input){
+    startTime 
+  }
+}

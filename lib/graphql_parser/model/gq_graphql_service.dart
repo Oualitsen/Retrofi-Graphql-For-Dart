@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:parser/graphql_parser/model/dart_serializable.dart';
 import 'package:parser/graphql_parser/model/gq_argument.dart';
@@ -11,16 +13,25 @@ class GQGraphqlService implements DartSerializable {
   @override
   String toDart(GraphQlGrammar grammar) {
     return """
+import 'dart:convert';
+import 'package:parser/graphql_parser/model/gq_graphql_service.dart';
+
+typedef GQHttpClientAdapter = Future<String> Function(String payload);
 
     ${GQQueryType.values.map((e) => generateQueriesClassByType(e, grammar)).join("\n")}
 
-    class GQClient {
-      
-       final queries = Queries();
-       final mustations = Mutations();
-       final subscriptions = Subscriptions();
-
+class GQClient {
+  final GQHttpClientAdapter adapter;
+  late final Queries queries;
+  late final Mutations mutations;
+  late final Subscriptions subscriptions;
+  GQClient(this.adapter) {
+    queries = Queries(adapter);
+    mutations = Mutations(adapter);
+    subscriptions = Subscriptions(adapter);
+  }
 }
+
     """
         .trim();
   }
@@ -30,7 +41,8 @@ class GQGraphqlService implements DartSerializable {
 
     return """
       class ${classNameFromType(type)} {
-        
+        final GQHttpClientAdapter adapter;
+        ${classNameFromType(type)}(this.adapter);
         ${queryList.map((e) => queryToMethod(e, g)).join("\n")}
 
 }
@@ -55,7 +67,7 @@ class GQGraphqlService implements DartSerializable {
       ${returnTypeByQueryType(def, g)} ${def.token}(${generateArgs(def, g)}) {
         var operationName = "${def.token}";
         var fragments = \"\"\" ${def.fragments.map((e) => e.serialize()).toList().join(" ")} \"\"\";
-        var q = \"\"\"
+        var query = \"\"\"
         ${def.serialize()} \$fragments
         \"\"\";
 
@@ -63,7 +75,17 @@ class GQGraphqlService implements DartSerializable {
           ${def.arguments.map((e) => "'${e.dartArgumentName}': ${serializeArgumentValue(g, def, e.token)}").toList().join(", ")}
         };
         
-        return Future.value();
+        var payload = PayLoad(query: query, operationName: operationName, variables: variables);
+        return adapter(payload.toString()).asStream().map((response) {
+      Map<String, dynamic> result = jsonDecode(response);
+      if (result.containsKey("errors")) {
+        throw result["errors"];
+      }
+      var data = result["data"];
+      return ${def.generate().token}.fromJson(data);
+      
+    }).first;
+        
       }
     """
         .trim();
@@ -102,16 +124,18 @@ class GQGraphqlService implements DartSerializable {
   }
 }
 
-class Service {
-  static final queries = Queries();
-}
+class PayLoad {
+  final String query;
+  final Map<dynamic, dynamic> variables;
+  final String operationName;
+  PayLoad({
+    required this.query,
+    required this.operationName,
+    required this.variables,
+  });
+  Map<String, dynamic> toJson() =>
+      {'operationName': operationName, 'variables': variables, 'query': query};
 
-class Queries {
-  String getData() {
-    return "Data";
-  }
-}
-
-void main(List<String> args) {
-  Service.queries.getData();
+  @override
+  String toString() => jsonEncode(toJson());
 }
