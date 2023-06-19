@@ -65,6 +65,7 @@ class GraphQlGrammar extends GrammarDefinition with GrammarDataMixin {
     updateFragmentDependencies();
     updateFragmentAllTypesDependecies();
     createProjectedTypes();
+    generateGQClient();
   }
 
   void updateInterfaceParents() {

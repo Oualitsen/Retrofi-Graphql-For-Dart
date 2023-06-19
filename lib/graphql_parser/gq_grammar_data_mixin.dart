@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
+import 'package:parser/graphql_parser/gq_grammar.dart';
 import 'package:parser/graphql_parser/model/gq_field.dart';
+import 'package:parser/graphql_parser/model/gq_graphql_service.dart';
 import 'package:parser/graphql_parser/model/gq_schema.dart';
 import 'package:parser/graphql_parser/model/gq_enum_definition.dart';
 import 'package:parser/graphql_parser/model/gq_fragment.dart';
@@ -9,6 +13,11 @@ import 'package:parser/graphql_parser/model/gq_token.dart';
 import 'package:parser/graphql_parser/model/gq_type.dart';
 import 'package:parser/graphql_parser/model/gq_union.dart';
 import 'package:parser/graphql_parser/model/gq_queries.dart';
+
+const destFolder = "/Users/M1/personal/typedGraphQLClient/lib/generated";
+final String inputFileName = "inputs";
+final String typesFileName = "types";
+final String gqClientFileName = "gq_client";
 
 mixin GrammarDataMixin {
   static const typename = "__typename";
@@ -34,14 +43,14 @@ mixin GrammarDataMixin {
   final Map<String, GQInputDefinition> inputs = {};
   final Map<String, GQTypeDefinition> types = {};
   final Map<String, GQInterfaceDefinition> interfaces = {};
-  final Map<String, List<GQQueryDefinition>> queries = {};
-  final Map<String, List<GQQueryDefinition>> mutations = {};
-  final Map<String, List<GQQueryDefinition>> subscriptions = {};
+  final Map<String, GQQueryDefinition> queries = {};
   final Map<String, GQEnumDefinition> enums = {};
   final Map<String, GQTypeDefinition> projectedTypes = {};
 
   GQSchema schema = GQSchema();
   bool schemaInitialized = false;
+
+  late final GQGraphqlService service;
 
   bool isNonProjectableType(String token) {
     return scalars.contains(token) || enums.containsKey(token);
@@ -89,51 +98,101 @@ mixin GrammarDataMixin {
   }
 
   void addQueryDefinition(GQQueryDefinition definition) {
-    Map<String, List<GQQueryDefinition>> map;
-    switch (definition.type) {
-      case GQQueryType.query:
-        map = queries;
-        break;
-      case GQQueryType.mutation:
-        map = mutations;
-        break;
-      case GQQueryType.subscription:
-        map = subscriptions;
-        break;
-    }
-    var currentList = map[definition.token] ?? [];
-    currentList.add(definition);
+    checkQueryDefinition(definition.token);
+    queries[definition.token] = definition;
+  }
 
-    map[definition.token] = currentList;
+  void saveToFiles(GraphQlGrammar g) {
+    createFiles();
+    saveInputFile(g);
+    saveTypesFile(g);
+    saveClientFile(g);
+  }
+
+  void createFiles() {
+    var inputFile = File("$destFolder/$inputFileName.dart");
+    if (!inputFile.existsSync()) {
+      inputFile.createSync(recursive: true);
+    }
+
+    var typesFile = File("$destFolder/$typesFileName.dart");
+    if (!typesFile.existsSync()) {
+      typesFile.createSync(recursive: true);
+    }
+
+    var clientFile = File("$destFolder/$gqClientFileName.dart");
+    if (!clientFile.existsSync()) {
+      clientFile.createSync(recursive: true);
+    }
+  }
+
+  void saveInputFile(GraphQlGrammar g) {
+    var file = File("$destFolder/$inputFileName.dart");
+
+    var inputs = this.inputs.values.toList().map((e) => e.toDart(g)).join("\n");
+    file.writeAsStringSync("""
+  import 'package:json_annotation/json_annotation.dart';
+
+  part '$inputFileName.g.dart';
+
+$inputs
+""");
+  }
+
+  void saveTypesFile(GraphQlGrammar g) {
+    var file = File("$destFolder/$typesFileName.dart");
+
+    var data =
+        projectedTypes.values.toList().map((e) => e.toDart(g)).join("\n");
+    var data2 =
+        queries.values.toList().map((e) => e.generate().toDart(g)).join("\n");
+    file.writeAsStringSync("""
+ import 'package:json_annotation/json_annotation.dart';
+
+  part '$typesFileName.g.dart';
+
+$data
+
+$data2  
+
+""");
+  }
+
+  void saveClientFile(GraphQlGrammar g) {
+    var file = File("$destFolder/$gqClientFileName.dart");
+
+    var data = service.toDart(g);
+    file.writeAsStringSync("""
+import '$inputFileName.dart';
+import '$typesFileName.dart';
+$data
+""");
+  }
+
+  fillQueryElementArgumentTypes(
+      GQQueryElement element, GQQueryDefinition query) {
+    for (var arg in element.arguments) {
+      var list = query.arguments.where((a) => a.token == arg.value).toList();
+      if (list.isEmpty) {
+        throw ParseException(
+            "Could not find argument ${arg.value} on query ${query.token}");
+      }
+      arg.type = list.first.type;
+    }
   }
 
   fillQueryElementsReturnType() {
-    queries.forEach((name, queryList) {
-      for (var queryDefinition in queryList) {
-        for (var element in queryDefinition.elements) {
-          element.returnType =
-              getTypeFromFieldName(element.token, schema.query);
-        }
+    queries.forEach((name, queryDefinition) {
+      for (var element in queryDefinition.elements) {
+        element.returnType = getTypeFromFieldName(
+            element.token, schema.getByQueryType(queryDefinition.type));
+        fillQueryElementArgumentTypes(element, queryDefinition);
       }
     });
+  }
 
-    mutations.forEach((name, queryList) {
-      for (var queryDefinition in queryList) {
-        for (var element in queryDefinition.elements) {
-          element.returnType =
-              getTypeFromFieldName(element.token, schema.mutation);
-        }
-      }
-    });
-
-    subscriptions.forEach((name, queryList) {
-      for (var queryDefinition in queryList) {
-        for (var element in queryDefinition.elements) {
-          element.returnType =
-              getTypeFromFieldName(element.token, schema.subscription);
-        }
-      }
-    });
+  generateGQClient() {
+    service = GQGraphqlService(queries.values.toList());
   }
 
   void checmEnumDefinition(GQEnumDefinition enumDefinition) {
@@ -196,23 +255,9 @@ mixin GrammarDataMixin {
     }
   }
 
-  void checkQueryDefinition(String token, GQQueryType type) {
-    switch (type) {
-      case GQQueryType.query:
-        if (queries.containsKey(token)) {
-          throw ParseException("Query $token has already been declared");
-        }
-        break;
-      case GQQueryType.mutation:
-        if (mutations.containsKey(token)) {
-          throw ParseException("Mutation $token has already been declared");
-        }
-        break;
-      case GQQueryType.subscription:
-        if (subscriptions.containsKey(token)) {
-          throw ParseException("subscription $token has already been declared");
-        }
-        break;
+  void checkQueryDefinition(String token) {
+    if (queries.containsKey(token)) {
+      throw ParseException("Query $token has already been declared");
     }
   }
 
@@ -260,13 +305,7 @@ mixin GrammarDataMixin {
   }
 
   List<GQQueryElement> getAllElements() {
-    List<GQQueryDefinition> l1 =
-        queries.values.expand((element) => element).toList();
-    List<GQQueryDefinition> l2 =
-        mutations.values.expand((element) => element).toList();
-    List<GQQueryDefinition> l3 =
-        subscriptions.values.expand((element) => element).toList();
-    return [...l1, ...l2, ...l3].expand((q) => q.elements).toList();
+    return queries.values.expand((q) => q.elements).toList();
   }
 
   void validateQueryDefinitionProjections() {
@@ -282,19 +321,35 @@ mixin GrammarDataMixin {
 
       if (element.block != null) {
         //validate projections with return type
-        validateQueryProjection(element.returnType, element.block!);
+        validateQueryProjection(element);
       }
     });
   }
 
-  void validateQueryProjection(GQType type, GQFragmentBlockDefinition block) {
+  void validateQueryProjection(GQQueryElement element) {
+    var type = element.returnType;
+    GQFragmentBlockDefinition? block = element.block;
+    if (block == null) {
+      return;
+    }
     block.projections.forEach((key, projection) {
       var inlineType = type.inlineType;
       var declaredType = getType(inlineType.token);
-      var list = declaredType.fields.where((f) => f.name == projection.token);
-      if (list.isEmpty) {
-        throw ParseException(
-            "Cannot find field '${projection.token}' in type '${inlineType.token}'");
+      if (projection.isFragmentReference) {
+        var fragment = getFragment(projection.token);
+
+        if (fragment.onTypeName != declaredType.token &&
+            !declaredType.interfaceNames.contains(fragment.onTypeName)) {
+          throw ParseException(
+              "Fragment ${fragment.token} cannot be applied to type ${type.token}");
+        }
+        element.fragmentReferences.add(fragment);
+      } else {
+        var list = declaredType.fields.where((f) => f.name == projection.token);
+        if (list.isEmpty) {
+          throw ParseException(
+              "Cannot find field '${projection.token}' in type '${inlineType.token}'");
+        }
       }
     });
   }
@@ -309,8 +364,6 @@ mixin GrammarDataMixin {
 
   void validateProjection(
       GQProjection projection, String typeName, String? fragmentName) {
-    print(
-        "Validating projection ${projection.isFragmentReference} ======== ${projection.token}");
     if (projection.isFragmentReference) {
       var fragment = getFragment(projection.token);
       var type = getType(typeName);
@@ -401,6 +454,7 @@ mixin GrammarDataMixin {
   }
 
   GQType getTypeFromFieldName(String fieldName, String typeName) {
+    print("typeName = ${typeName}");
     var type = getType(typeName);
 
     var fields =
@@ -477,10 +531,8 @@ mixin GrammarDataMixin {
 
     //create for queries, mutations and subscriptions
     getAllElements().where((e) => e.block != null).forEach((element) {
-      print("generating new type ....");
       var newType =
           createProjectedTypeForQuery(element.returnType, element.block!);
-      print("generated type ${newType.token}");
       element.projectedType = newType;
     });
   }

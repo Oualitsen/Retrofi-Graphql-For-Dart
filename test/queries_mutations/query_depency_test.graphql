@@ -1,0 +1,41 @@
+
+input PageIndex {
+  index: Int!
+  page: Int!
+}
+
+type Product {
+  id: ID!
+  name: String!
+  price: Float!
+  wasPrice: Float
+}
+
+input ProductInput {
+  name: String!
+  price: Float!
+  wasPrice: Float
+}
+
+type Query {
+
+  getProductById(id: ID!): Product!
+
+}
+
+
+query ProductQuery($id: ID!, $pageIndex: PageIndex!) {
+
+  
+
+  getProductById(id: $id) {
+    ...ProductFragment
+  }
+
+}
+
+
+
+fragment ProductFragment on Product {
+  id name price wasPrice
+}

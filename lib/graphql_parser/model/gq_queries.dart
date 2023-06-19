@@ -1,5 +1,6 @@
 import 'package:parser/graphql_parser/model/gq_directive.dart';
 import 'package:parser/graphql_parser/model/gq_argument.dart';
+import 'package:parser/graphql_parser/model/gq_field.dart';
 import 'package:parser/graphql_parser/model/gq_fragment.dart';
 import 'package:parser/graphql_parser/excpetions/parse_exception.dart';
 import 'package:parser/graphql_parser/model/gq_input_type.dart';
@@ -14,6 +15,13 @@ class GQQueryDefinition extends GQToken {
   final List<GQArgumentDefinition> arguments;
   final List<GQQueryElement> elements;
   final GQQueryType type; //query|mutation|subscription
+
+  Set<GQFragmentDefinitionBase> get fragments {
+    return elements
+        .expand((e) => e.fragmentReferences)
+        .expand((f) => {f, ...f.dependecies})
+        .toSet();
+  }
 
   GQQueryDefinition(
       super.token, this.directives, this.arguments, this.elements, this.type) {
@@ -55,6 +63,29 @@ class GQQueryDefinition extends GQToken {
       }
     """;
   }
+
+  GQTypeDefinition generate() {
+    return GQTypeDefinition(
+      name: "${_capitilizedFirstLetterToken}Response",
+      fields: _generateFields(),
+      directives: directives,
+      interfaceNames: {},
+    );
+  }
+
+  String get _capitilizedFirstLetterToken {
+    if (token.length == 1) {
+      return token.toUpperCase();
+    }
+    return "${token[0].toUpperCase()}${token.substring(1)}";
+  }
+
+  List<GQField> _generateFields() {
+    return elements
+        .map((e) =>
+            GQField(name: e.token, type: e.returnProjectedType, arguments: []))
+        .toList();
+  }
 }
 
 class GQQueryElement extends GQToken {
@@ -70,7 +101,28 @@ class GQQueryElement extends GQToken {
   ///
   ///This is unknown on parse time. It is filled on run time.
   ///
-  late final GQTypeDefinition? projectedType;
+  GQTypeDefinition? projectedType;
+
+  final Set<GQFragmentDefinitionBase> fragmentReferences = {};
+
+  GQType _getReturnProjectedType(
+      GQTypeDefinition? projectedType, GQType returnType) {
+    if (projectedType == null) {
+      return returnType;
+    } else {
+      if (returnType is GQListType) {
+        return GQListType(
+            _getReturnProjectedType(projectedType, returnType.type),
+            returnType.nullable);
+      } else {
+        return GQType(projectedType.token, returnType.nullable,
+            isScalar: false);
+      }
+    }
+  }
+
+  GQType get returnProjectedType =>
+      _getReturnProjectedType(projectedType, returnType);
 
   GQQueryElement(super.token, this.directives, this.block, this.arguments);
 

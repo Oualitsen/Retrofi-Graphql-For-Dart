@@ -16,6 +16,8 @@ class GQArgumentDefinition extends GQToken {
     return 'Argument{name: $token, type: $type}';
   }
 
+  String get dartArgumentName => token.substring(1);
+
   @override
   String serialize() {
     var r = "$token: ${type.serialize()}";
@@ -32,7 +34,8 @@ class GQArgumentDefinition extends GQToken {
 
 class GQArgumentValue extends GQToken {
   Object? value;
-
+  //this is not know at parse type, it must be set only once the grammer parsing is done.
+  late final GQType type;
   GQArgumentValue(String name, this.value) : super(name);
 
   @override

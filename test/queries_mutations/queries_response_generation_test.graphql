@@ -24,37 +24,47 @@ type Query {
 
   getAllProducts(): [Product!]!
 
+  getCount(): Int!
+
 }
 
 type Mutation {
   createProduct(input: ProductInput!): Product!
   deleteProduct(id: ID!): Product!
+
+  deleteProduct2(id: Int): Int 
 }
 
-query Product($pageIndex: PageIndex!) {
+query getProducts($pageIndex: PageIndex!) {
 
   getProducts(pageIndex: $pageIndex) {
     id, name, price, wasPrice
   }
 
+  getCount
+
 }
 
-query Product {
-
+query getAllProducts {
   getAllProducts {
     id name
   }
-
 }
 
 
-mutation ProductMutations($id: ID!, $input: ProductInput!) {
+mutation createProduct($input: ProductInput!) {
   createProduct(input: $input) {
     id name
   }
-
-  deleteProduct(id: $id) {
-    id
-  }
 }
 
+
+mutation deleteProduct($id: ID!, $id2: Int) {
+  deleteProduct(id: $id) {
+    id name
+  }
+
+  deleteProduct2(id: $id2)
+
+  
+}

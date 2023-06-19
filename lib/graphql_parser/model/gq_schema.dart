@@ -1,3 +1,5 @@
+import 'package:parser/graphql_parser/model/gq_queries.dart';
+
 class GQSchema {
   final String query;
   final String mutation;
@@ -15,6 +17,17 @@ class GQSchema {
     String subscription = find("subscription", list) ?? "Subscription";
     return GQSchema(
         query: query, mutation: mutation, subscription: subscription);
+  }
+
+  String getByQueryType(GQQueryType type) {
+    switch (type) {
+      case GQQueryType.query:
+        return query;
+      case GQQueryType.mutation:
+        return mutation;
+      case GQQueryType.subscription:
+        return subscription;
+    }
   }
 
   static String? find(String prefix, List<String> list) {

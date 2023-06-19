@@ -5,15 +5,11 @@ import 'package:petitparser/petitparser.dart';
 
 void main() {
   test("Union serialization", () {
-    final GraphQlGrammar g = GraphQlGrammar();
-
     var union = GQUnionDefinition("type", ["User"]);
     expect(union.serialize(), "union type = User");
   });
 
   test("Union serialization with multiple types", () {
-    final GraphQlGrammar g = GraphQlGrammar();
-
     var union = GQUnionDefinition("type", ["User", "Client"]);
     expect(union.serialize(), "union type = User | Client");
   });

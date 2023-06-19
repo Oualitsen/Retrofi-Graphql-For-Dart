@@ -62,7 +62,6 @@ void main() {
      
     
     ''');
-    print("resul.value = ${result.value}"); // result.value
     expect(result.isSuccess, true);
   });
 
@@ -84,7 +83,6 @@ void main() {
        ... fragmentName
     ''');
     expect(result.isSuccess, true);
-    print("type = ${result.value.runtimeType}");
 
     result = parser.parse('''
         ... on BasicEntity {
@@ -143,7 +141,7 @@ void main() {
   test("Fragment Definitions 2", () {
     final GraphQlGrammar g = GraphQlGrammar();
     var parser = g.buildFrom(g.fragmentDefinition().end());
-    var result = parser.parse('''
+    parser.parse('''
         
        fragment ProductFields  on Product {
           myAliassedId:id  name 
