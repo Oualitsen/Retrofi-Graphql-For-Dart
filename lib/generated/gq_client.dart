@@ -9,20 +9,87 @@ typedef GQHttpClientAdapter = Future<String> Function(String payload);
     class Queries {
         final GQHttpClientAdapter adapter;
         Queries(this.adapter);
+        Future<GetProductsResponse> getProducts({required PageIndex pageIndex}) {
+        var operationName = "getProducts";
+        var fragments = """  """;
+        var query = """
+        query getProducts (\$pageIndex: PageIndex!)  {
+        getProducts (pageIndex: \$pageIndex) 
+      {
+      id  name  price  wasPrice 
+    }
+getCount  
+      
+      }
+     $fragments
+        """;
+
+        var variables = {
+          'pageIndex': pageIndex.toJson()
+        };
         
+        var payload = PayLoad(query: query, operationName: operationName, variables: variables);
+        return adapter(payload.toString()).asStream().map((response) {
+      Map<String, dynamic> result = jsonDecode(response);
+      if (result.containsKey("errors")) {
+        throw result["errors"];
+      }
+      var data = result["data"];
+      return GetProductsResponse.fromJson(data);
+      
+    }).first;
+        
+      }
+Future<GetAllProductsResponse> getAllProducts() {
+        var operationName = "getAllProducts";
+        var fragments = """  """;
+        var query = """
+        query getAllProducts   {
+        getAllProducts  
+      {
+      id  name 
+    }
+      }
+     $fragments
+        """;
+
+        var variables = {
+          
+        };
+        
+        var payload = PayLoad(query: query, operationName: operationName, variables: variables);
+        return adapter(payload.toString()).asStream().map((response) {
+      Map<String, dynamic> result = jsonDecode(response);
+      if (result.containsKey("errors")) {
+        throw result["errors"];
+      }
+      var data = result["data"];
+      return GetAllProductsResponse.fromJson(data);
+      
+    }).first;
+        
+      }
 
 }
 class Mutations {
         final GQHttpClientAdapter adapter;
         Mutations(this.adapter);
-        Future<SavePositionResponse> savePosition({required PositionInput input}) {
-        var operationName = "savePosition";
-        var fragments = """  """;
+        Future<CreateProductResponse> createProduct({required ProductInput input}) {
+        var operationName = "createProduct";
+        var fragments = """       fragment ProductFragment on Product  {
+      id  name  price  brand {
+      ... BrandFragment 
+    }
+    } 
+           fragment BrandFragment on Brand  {
+      name  country 
+    } 
+     """;
         var query = """
-        mutation savePosition (\$input: PositionInput!)  {
-        savePosition (position: \$input) 
+        mutation createProduct (\$input: ProductInput!)  {
+        createProduct (input: \$input) 
       {
-      startTime 
+      ... ProductFragment 
     }
       }
      $fragments
@@ -39,7 +106,38 @@ class Mutations {
         throw result["errors"];
       }
       var data = result["data"];
-      return SavePositionResponse.fromJson(data);
+      return CreateProductResponse.fromJson(data);
+      
+    }).first;
+        
+      }
+Future<DeleteProductResponse> deleteProduct({required String id, required int? id2}) {
+        var operationName = "deleteProduct";
+        var fragments = """  """;
+        var query = """
+        mutation deleteProduct (\$id: ID!, \$id2: Int)  {
+        deleteProduct (id: \$id) 
+      {
+      id  name 
+    }
+deleteProduct2 (id: \$id2) 
+      
+      }
+     $fragments
+        """;
+
+        var variables = {
+          'id': id, 'id2': id2
+        };
+        
+        var payload = PayLoad(query: query, operationName: operationName, variables: variables);
+        return adapter(payload.toString()).asStream().map((response) {
+      Map<String, dynamic> result = jsonDecode(response);
+      if (result.containsKey("errors")) {
+        throw result["errors"];
+      }
+      var data = result["data"];
+      return DeleteProductResponse.fromJson(data);
       
     }).first;
         
