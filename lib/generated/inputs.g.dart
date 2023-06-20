@@ -8,13 +8,11 @@ part of 'inputs.dart';
 
 AgencyInput _$AgencyInputFromJson(Map<String, dynamic> json) => AgencyInput(
       id: json['id'] as String?,
-      creationDate: json['creationDate'] as int?,
-      lastUpdate: json['lastUpdate'] as int?,
       designation: json['designation'] as String?,
       cashierId: json['cashierId'] as String?,
       address: json['address'] as String?,
       phones:
-          (json['phones'] as List<dynamic>?)?.map((e) => e as String?).toList(),
+          (json['phones'] as List<dynamic>).map((e) => e as String).toList(),
       email: json['email'] as String?,
       webSite: json['webSite'] as String?,
     );
@@ -22,8 +20,6 @@ AgencyInput _$AgencyInputFromJson(Map<String, dynamic> json) => AgencyInput(
 Map<String, dynamic> _$AgencyInputToJson(AgencyInput instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'creationDate': instance.creationDate,
-      'lastUpdate': instance.lastUpdate,
       'designation': instance.designation,
       'cashierId': instance.cashierId,
       'address': instance.address,
@@ -34,25 +30,20 @@ Map<String, dynamic> _$AgencyInputToJson(AgencyInput instance) =>
 
 CashierInput _$CashierInputFromJson(Map<String, dynamic> json) => CashierInput(
       id: json['id'] as String?,
-      lastUpdate: json['lastUpdate'] as int?,
-      creationDate: json['creationDate'] as int?,
       code: json['code'] as String?,
       designation: json['designation'] as String?,
       address: json['address'] as String?,
       phones:
-          (json['phones'] as List<dynamic>?)?.map((e) => e as String?).toList(),
+          (json['phones'] as List<dynamic>).map((e) => e as String).toList(),
       emails:
-          (json['emails'] as List<dynamic>?)?.map((e) => e as String?).toList(),
-      webSite: (json['webSite'] as List<dynamic>?)
-          ?.map((e) => e as String?)
-          .toList(),
+          (json['emails'] as List<dynamic>).map((e) => e as String).toList(),
+      webSite:
+          (json['webSite'] as List<dynamic>).map((e) => e as String).toList(),
     );
 
 Map<String, dynamic> _$CashierInputToJson(CashierInput instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'lastUpdate': instance.lastUpdate,
-      'creationDate': instance.creationDate,
       'code': instance.code,
       'designation': instance.designation,
       'address': instance.address,
@@ -63,6 +54,7 @@ Map<String, dynamic> _$CashierInputToJson(CashierInput instance) =>
 
 PersonalInfoInput _$PersonalInfoInputFromJson(Map<String, dynamic> json) =>
     PersonalInfoInput(
+      id: json['id'] as String?,
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
       gender: $enumDecode(_$GenderEnumMap, json['gender']),
@@ -79,6 +71,7 @@ PersonalInfoInput _$PersonalInfoInputFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$PersonalInfoInputToJson(PersonalInfoInput instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'firstName': instance.firstName,
       'lastName': instance.lastName,
       'gender': _$GenderEnumMap[instance.gender]!,
@@ -147,8 +140,8 @@ HemodialysisGroupInput _$HemodialysisGroupInputFromJson(
       lastUpdate: json['lastUpdate'] as int?,
       code: json['code'] as String?,
       designation: json['designation'] as String?,
-      daysOfWeek: (json['daysOfWeek'] as List<dynamic>?)
-          ?.map((e) => e as String?)
+      daysOfWeek: (json['daysOfWeek'] as List<dynamic>)
+          .map((e) => e as String)
           .toList(),
     );
 
@@ -165,6 +158,7 @@ Map<String, dynamic> _$HemodialysisGroupInputToJson(
 
 AssignmentInput _$AssignmentInputFromJson(Map<String, dynamic> json) =>
     AssignmentInput(
+      id: json['id'] as String?,
       medicalStaff: json['medicalStaff'] == null
           ? null
           : EnsurerInput.fromJson(json['medicalStaff'] as Map<String, dynamic>),
@@ -187,6 +181,7 @@ AssignmentInput _$AssignmentInputFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$AssignmentInputToJson(AssignmentInput instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'medicalStaff': instance.medicalStaff,
       'hemodialysisGroup': instance.hemodialysisGroup,
       'position': instance.position,
@@ -199,6 +194,7 @@ Map<String, dynamic> _$AssignmentInputToJson(AssignmentInput instance) =>
 
 PatientRoomInput _$PatientRoomInputFromJson(Map<String, dynamic> json) =>
     PatientRoomInput(
+      id: json['id'] as String?,
       code: json['code'] as String?,
       name: json['name'] as String?,
       designation: json['designation'] as String?,
@@ -206,6 +202,7 @@ PatientRoomInput _$PatientRoomInputFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$PatientRoomInputToJson(PatientRoomInput instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'code': instance.code,
       'name': instance.name,
       'designation': instance.designation,
@@ -214,8 +211,6 @@ Map<String, dynamic> _$PatientRoomInputToJson(PatientRoomInput instance) =>
 PositionInput _$PositionInputFromJson(Map<String, dynamic> json) =>
     PositionInput(
       id: json['id'] as String?,
-      creationDate: json['creationDate'] as int?,
-      lastUpdate: json['lastUpdate'] as int?,
       designation: json['designation'] as String?,
       startTime: json['startTime'] as int?,
       endTime: json['endTime'] as int?,
@@ -224,14 +219,13 @@ PositionInput _$PositionInputFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$PositionInputToJson(PositionInput instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'creationDate': instance.creationDate,
-      'lastUpdate': instance.lastUpdate,
       'designation': instance.designation,
       'startTime': instance.startTime,
       'endTime': instance.endTime,
     };
 
 EnsurerInput _$EnsurerInputFromJson(Map<String, dynamic> json) => EnsurerInput(
+      id: json['id'] as String?,
       person: json['person'] == null
           ? null
           : PersonalInfoInput.fromJson(json['person'] as Map<String, dynamic>),
@@ -242,6 +236,7 @@ EnsurerInput _$EnsurerInputFromJson(Map<String, dynamic> json) => EnsurerInput(
 
 Map<String, dynamic> _$EnsurerInputToJson(EnsurerInput instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'person': instance.person,
       'socialSecurityNumber': instance.socialSecurityNumber,
       'ensurerRelationship':
@@ -269,20 +264,17 @@ Map<String, dynamic> _$PageInfoToJson(PageInfo instance) => <String, dynamic>{
 MedicalStaffInput _$MedicalStaffInputFromJson(Map<String, dynamic> json) =>
     MedicalStaffInput(
       id: json['id'] as String?,
-      creationDate: json['creationDate'] as int?,
-      lastUpdate: json['lastUpdate'] as int?,
-      person: json['person'] == null
+      PersonalInfo: json['PersonalInfo'] == null
           ? null
-          : PersonalInfoInput.fromJson(json['person'] as Map<String, dynamic>),
+          : PersonalInfoInput.fromJson(
+              json['PersonalInfo'] as Map<String, dynamic>),
       rank: $enumDecodeNullable(_$RankEnumMap, json['rank']),
     );
 
 Map<String, dynamic> _$MedicalStaffInputToJson(MedicalStaffInput instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'creationDate': instance.creationDate,
-      'lastUpdate': instance.lastUpdate,
-      'person': instance.person,
+      'PersonalInfo': instance.PersonalInfo,
       'rank': _$RankEnumMap[instance.rank],
     };
 

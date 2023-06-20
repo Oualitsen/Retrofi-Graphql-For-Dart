@@ -9,27 +9,59 @@ typedef GQHttpClientAdapter = Future<String> Function(String payload);
     class Queries {
         final GQHttpClientAdapter adapter;
         Queries(this.adapter);
-        
-
-}
-class Mutations {
-        final GQHttpClientAdapter adapter;
-        Mutations(this.adapter);
-        Future<SavePositionResponse> savePosition({required PositionInput input}) {
-        var operationName = "savePosition";
+        Future<HemodialysisGroupListResponse> hemodialysisGroupList({required PageInfo pageInfo}) {
+        var operationName = "hemodialysisGroupList";
         var fragments = """  """;
         var query = """
-        mutation savePosition (\$input: PositionInput!)  {
-        savePosition (position: \$input) 
+        query hemodialysisGroupList (\$pageInfo: PageInfo!)  {
+        hemodialysisGroupList (pageInfo: \$pageInfo) 
       {
-      startTime 
+      id  designation 
     }
       }
      $fragments
         """;
 
         var variables = {
-          'input': input.toJson()
+          'pageInfo': pageInfo.toJson()
+        };
+        
+        var payload = PayLoad(query: query, operationName: operationName, variables: variables);
+        return adapter(payload.toString()).asStream().map((response) {
+      Map<String, dynamic> result = jsonDecode(response);
+      if (result.containsKey("errors")) {
+        throw result["errors"];
+      }
+      var data = result["data"];
+      return HemodialysisGroupListResponse.fromJson(data);
+      
+    }).first;
+        
+      }
+
+}
+class Mutations {
+        final GQHttpClientAdapter adapter;
+        Mutations(this.adapter);
+        Future<SavePositionResponse> savePosition({required PositionInput input, required HemodialysisGroupInput ginput}) {
+        var operationName = "savePosition";
+        var fragments = """  """;
+        var query = """
+        mutation savePosition (\$input: PositionInput!, \$ginput: HemodialysisGroupInput!)  {
+        savePosition (position: \$input) 
+      {
+      startTime 
+    }
+saveHemodialysisGroup (input: \$ginput) 
+      {
+      id 
+    }
+      }
+     $fragments
+        """;
+
+        var variables = {
+          'input': input.toJson(), 'ginput': ginput.toJson()
         };
         
         var payload = PayLoad(query: query, operationName: operationName, variables: variables);
