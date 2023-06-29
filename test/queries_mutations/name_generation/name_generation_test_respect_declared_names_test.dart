@@ -5,21 +5,22 @@ import 'package:retrofit_graphql/graphql_parser/gq_grammar.dart';
 import 'package:petitparser/petitparser.dart';
 
 void main() async {
-  test("renamin projected types test", () {
+  test("name_generation_test_respect_declared_names_test", () {
     final GQGrammar g = GQGrammar();
 
     var parser = g.buildFrom(g.fullGrammar().end());
 
     final text = File(
-            "test/queries_mutations/renamin_projected_types/renaming_projected_types_test.graphql")
+            "test/queries_mutations/name_generation/name_generation_test_respect_declared_names_test.graphql")
         .readAsStringSync();
     var parsed = parser.parse(text);
 
     expect(parsed.isSuccess, true);
-    //renamed product input
-    expect(g.inputs.keys, contains("MyProductInput"));
-    //renamed responses
-    expect(g.queries["getAllProducts"]!.getGeneratedTypeDefinition().token,
-        equals("MyProductResp"));
+    expect(
+        g.projectedTypes.values
+            .where((element) => element.token != "ProductResponse")
+            .map((e) => e.token)
+            .toList(),
+        containsAll(["P1", "P2"]));
   });
 }
