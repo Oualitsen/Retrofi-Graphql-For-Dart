@@ -115,6 +115,7 @@ class GQQueryDefinition extends GQToken {
 class GQQueryElement extends GQToken {
   final List<GQDirectiveValue> directives;
   final GQFragmentBlockDefinition? block;
+
   final List<GQArgumentValue> arguments;
   final String? alias;
 

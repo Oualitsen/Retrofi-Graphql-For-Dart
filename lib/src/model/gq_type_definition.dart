@@ -9,8 +9,18 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
   final Set<String> interfaceNames;
   final List<GQDirectiveValue> directives;
   final bool nameDeclared;
+  GQTypeDefinition? superClass;
+
+  ///
+  /// Used only when generating type for interfaces.
+  /// This will be a super class of one or more base types.
+  ///
+  final Map<String, GQTypeDefinition> subTypes = {};
 
   String? _hash;
+
+  List<GQField>? _myFields;
+  List<GQField>? _commontFields;
 
   GQTypeDefinition({
     required String name,
@@ -43,16 +53,73 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
   String toDart(GQGrammar grammar) {
     return """
       @JsonSerializable()
-      class $token {
-          ${serializeListText(fields.map((e) => e.toDart(grammar)).toList(), join: "\n\r          ", withParenthesis: false)}
+      class $token ${_serializeSuperClass()}{
+          ${serializeListText(getFields().map((e) => e.toDart(grammar)).toList(), join: "\n\r          ", withParenthesis: false)}
           
-          $token(${serializeContructorArgs()});
+          $token(${serializeContructorArgs(grammar)})${_serializeCallToSuper(grammar)};
           
           factory $token.fromJson(Map<String, dynamic> json) => _\$${token}FromJson(json);
           
           Map<String, dynamic> toJson() => _\$${token}ToJson(this);
       }
     """;
+  }
+
+  String _serializeCallToSuper(GQGrammar grammar) {
+    if (getCommonFields().isEmpty) {
+      return "";
+    }
+    return ": super(${serializeListText(
+      getCommonFields().map((e) => "${e.name}: ${e.name}").toList(),
+      withParenthesis: false,
+    )})";
+  }
+
+  List<GQField> getFields() {
+    if (_myFields != null) {
+      return _myFields!;
+    }
+    return [...fields, ...getCommonFields()];
+  }
+
+  List<GQField> getCommonFields() {
+    if (_commontFields != null) {
+      return _commontFields!;
+    }
+
+    if (subTypes.isNotEmpty) {
+      //get the commont fields
+      Set<GQField> commonFields = {};
+
+      Map<GQField, int> occurenceMap = {};
+
+      subTypes.forEach((key, typeDef) {
+        for (var field in typeDef.fields) {
+          if (occurenceMap.containsKey(field)) {
+            occurenceMap[field] = occurenceMap[field]! + 1;
+          } else {
+            occurenceMap[field] = 1;
+          }
+        }
+      });
+
+      occurenceMap.forEach((key, value) {
+        if (value > 1) {
+          commonFields.add(key);
+        }
+      });
+      _commontFields = commonFields.toList();
+    } else {
+      _commontFields = [];
+    }
+    return _commontFields!;
+  }
+
+  String _serializeSuperClass() {
+    if (superClass == null) {
+      return '';
+    }
+    return "extends ${superClass!.token} ";
   }
 
   String serializeFields(GQGrammar grammar) {
@@ -62,11 +129,16 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
         withParenthesis: false);
   }
 
-  String serializeContructorArgs() {
+  String serializeContructorArgs(GQGrammar grammar) {
     if (fields.isEmpty) {
       return "";
     }
-    return "{${fields.map((e) => e.name).map((e) => "required this.$e").join(", ")}}";
+    String commonFields = getCommonFields()
+        .map((e) => e.toDartMethodDeclaration(grammar))
+        .join(", ");
+    String nonCommonFields =
+        fields.map((e) => e.name).map((e) => "required this.$e").join(", ");
+    return "{${[nonCommonFields, commonFields].join(", ")}}";
   }
 
   @override
