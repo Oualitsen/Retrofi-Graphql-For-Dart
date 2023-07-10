@@ -502,7 +502,6 @@ $data
   }
 
   void createAllFieldsFragments() {
-    return;
     var allTypes = {...interfaces, ...types};
     allTypes.forEach((key, typeDefinition) {
       if (![schema.mutation, schema.query, schema.subscription].contains(key)) {
@@ -544,9 +543,6 @@ $data
   }
 
   void createProjectedTypes() {
-    print(
-        "Creating projected types ${getAllElements().where((e) => e.block != null).length}");
-    //create for queries, mutations and subscriptions
     getAllElements().where((e) => e.block != null).forEach((element) {
       var newType = createProjectedTypeForQuery(element);
       element.projectedTypeKey = newType.token;
@@ -586,7 +582,7 @@ $data
 
     // check for super types
     if (onType is GQInterfaceDefinition) {
-      var map = <String, GQTypeDefinition>{};
+      var map = <GQTypeDefinition>{};
       //generate implementations ...
       block.projections.values
           .whereType<GQInlineFragmentsProjection>()
@@ -595,13 +591,11 @@ $data
         map.addAll(result);
       });
       newType.subTypes.addAll(map);
-      print("map.keys = ${newType.subTypes.keys}");
     }
-
     return addToProjectedType(newType);
   }
 
-  Map<String, GQTypeDefinition> generateSubClasses(
+  Set<GQTypeDefinition> generateSubClasses(
     GQTypeDefinition superType,
     GQInterfaceDefinition onType,
     GQInlineFragmentsProjection projection,
@@ -625,7 +619,7 @@ $data
       result[type.token] = type;
     });
 
-    return result;
+    return result.values.toSet();
   }
 
   GQTypeDefinition createProjectedTypeWithProjectionBlock(GQField field,

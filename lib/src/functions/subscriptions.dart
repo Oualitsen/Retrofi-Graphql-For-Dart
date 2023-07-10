@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
-
 import 'package:retrofit_graphql/src/functions/graphql_data_objects.dart';
 import 'package:retrofit_graphql/src/utils.dart';
 
