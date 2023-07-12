@@ -578,6 +578,7 @@ $data
       fields: applyProjection(onType, block.projections),
       interfaceNames: onType.interfaceNames,
       directives: onType.directives,
+      derivedFromType: onType,
     );
 
     // check for super types
@@ -604,15 +605,15 @@ $data
     projection.inlineFragments.map((inlineFragProjection) {
       var name = generateName(inlineFragProjection.token,
           inlineFragProjection.block, inlineFragProjection.directives);
-      var superOnType = getType(inlineFragProjection.onTypeName);
-
+      var subType = getType(inlineFragProjection.onTypeName);
       return GQTypeDefinition(
         name: name.value,
         nameDeclared: name.declared,
-        fields: applyProjection(
-            superOnType, inlineFragProjection.block.projections),
-        interfaceNames: superOnType.interfaceNames,
-        directives: superOnType.directives,
+        fields:
+            applyProjection(subType, inlineFragProjection.block.projections),
+        interfaceNames: subType.interfaceNames,
+        directives: subType.directives,
+        derivedFromType: subType,
       )..superClass = superType;
     }).forEach((type) {
       addToProjectedType(type);
@@ -636,11 +637,13 @@ $data
     });
 
     var result = GQTypeDefinition(
-        name: name.value,
-        nameDeclared: name.declared,
-        fields: applyProjection(nonProjectedType, projections),
-        interfaceNames: {},
-        directives: []);
+      name: name.value,
+      nameDeclared: name.declared,
+      fields: applyProjection(nonProjectedType, projections),
+      interfaceNames: {},
+      directives: [],
+      derivedFromType: nonProjectedType,
+    );
 
     return addToProjectedType(result);
   }

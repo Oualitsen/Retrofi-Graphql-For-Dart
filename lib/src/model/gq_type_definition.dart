@@ -9,6 +9,7 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
   final Set<String> interfaceNames;
   final List<GQDirectiveValue> directives;
   final bool nameDeclared;
+  final GQTypeDefinition? derivedFromType;
   GQTypeDefinition? superClass;
 
   ///
@@ -33,6 +34,7 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
     required List<GQField> fields,
     required this.interfaceNames,
     required this.directives,
+    required this.derivedFromType,
   }) : super(name, fields) {
     fields.sort((f1, f2) => f1.name.compareTo(f2.name));
   }
@@ -66,24 +68,33 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
           $token(${serializeContructorArgs(grammar)})${_serializeCallToSuper(grammar)};
           
           factory $token.fromJson(Map<String, dynamic> json) {
-             return _\$${token}FromJson(json);
+             ${_serilaizeFromJson()}
           }
           
           Map<String, dynamic> toJson() {
-            return _\$${token}ToJson(this);
+            ${_serilaizeToJson()}
           }
       }
     """;
   }
 
-  String _serilaizeToJson() {
+  String _serilaizeFromJson() {
     if (subTypes.isEmpty) {
       return "return _\$${token}FromJson(json);";
     } else {
       return """
-
+      var typename = json["__typename"];
+      switch(typename) {
+        
+        ${subTypes.map((st) => "case \"${st.derivedFromType?.token}\": return ${st.token}FromJson(json);").join("\n        ")}
+      }
+      return _\$${token}FromJson(json);
     """;
     }
+  }
+
+  String _serilaizeToJson() {
+    return "return _\$${token}ToJson(this);";
   }
 
   void _updateFields() {
@@ -178,7 +189,6 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
         : _superFields
             .map((e) => e.toDartMethodDeclaration(grammar))
             .join(", ");
-    print("######## commonFields = $commonFields");
     String nonCommonFields = getFields().isEmpty
         ? ""
         : getFields()
@@ -208,6 +218,7 @@ class GQTypeDefinition extends GQTokenWithFields implements DartSerializable {
       fields: fields.toList(),
       interfaceNames: interfaceNames,
       directives: [],
+      derivedFromType: derivedFromType,
     );
   }
 }

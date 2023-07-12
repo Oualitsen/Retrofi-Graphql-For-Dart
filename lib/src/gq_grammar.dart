@@ -23,6 +23,11 @@ export 'package:retrofit_graphql/src/gq_grammar_extension.dart';
 class GQGrammar extends GrammarDefinition {
   var logger = Logger();
   static const typename = "__typename";
+  static final typenameField = GQField(
+      name: typename,
+      type: GQType("String", false, isScalar: true),
+      arguments: [],
+      directives: []);
   static const gqTypeNameDirective = "@gqTypeName";
 
   static const includeDirective = "@include";
@@ -225,6 +230,7 @@ class GQGrammar extends GrammarDefinition {
         fields: fields,
         interfaceNames: interfaceNames ?? {},
         directives: directives,
+        derivedFromType: null,
       );
       addTypeDefinition(type);
       return type;
