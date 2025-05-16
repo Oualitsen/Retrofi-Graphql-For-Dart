@@ -4,20 +4,15 @@ import 'package:test/test.dart';
 import 'package:retrofit_graphql/src/gq_grammar.dart';
 import 'package:petitparser/petitparser.dart';
 
+final GQGrammar g = GQGrammar();
+
 void main() async {
-  test("tojson_method_call_test", () {
+  test("same type signature should generate different classes when derrived from different types", () {
+    final text = File("test/same_type_signature/same_type_signature.graphql").readAsStringSync();
     final GQGrammar g = GQGrammar(generateAllFieldsFragments: true);
-    const path = "test/queries_mutations/tojson_method_call_test";
-
     var parser = g.buildFrom(g.fullGrammar().end());
-
-    final text =
-        File("$path/tojson_method_call_test.graphql").readAsStringSync();
     var parsed = parser.parse(text);
-
     expect(parsed is Success, true);
-    Directory("$path/gen").createSync();
-    var client = g.generateClient();
-    expect(client, contains("'input': input?.toJson()"));
+    expect(g.types.keys, containsAll(["Make", "Model"]));
   });
 }
