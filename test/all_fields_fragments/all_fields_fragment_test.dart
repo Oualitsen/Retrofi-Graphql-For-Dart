@@ -7,12 +7,15 @@ import 'package:petitparser/petitparser.dart';
 void main() {
   test("type_looks_like_test", () {
     final text =
-        File("test/base_types_and_unions/unions.graphql").readAsStringSync();
+        File("test/all_fields_fragments/all_fields_fragment_test.graphql")
+            .readAsStringSync();
     var g = GQGrammar(generateAllFieldsFragments: true);
     var parser = g.buildFrom(g.fullGrammar().end());
     var parsed = parser.parse(text);
     expect(parsed is Success, true);
-    expect(g.projectedTypes.keys,
-        containsAll(["Cat", "Dog_age_ownerName", "Animal"]));
+    expect(g.fragments.keys, contains("_all_fields_Animal"));
+    var frag = g.fragments["_all_fields_Animal"]!;
+    expect(frag.dependecies.map((d) => d.token).toList(),
+        containsAll(["_all_fields_Cat", "_all_fields_Dog"]));
   });
 }
