@@ -7,12 +7,14 @@ import 'package:petitparser/petitparser.dart';
 final GQGrammar g = GQGrammar();
 
 void main() async {
-  test("query definition auto generation on unions", () {
-    final text = File("test/queries_auto_gen/queries_auto_gen_unions.graphql").readAsStringSync();
+  test("Should generate all implemented interfaces", () {
+    final text = File("test/interface_generation/interface_generation_test.graphql").readAsStringSync();
     final GQGrammar g = GQGrammar(generateAllFieldsFragments: true, autoGenerateQueries: true);
     var parser = g.buildFrom(g.fullGrammar().end());
     var parsed = parser.parse(text);
     expect(parsed is Success, true);
-    expect(g.projectedTypes, contains("MyUnion"));
+    expect(g.projectedTypes.keys, containsAll(["BasicEntity", "UserBase"]));
+    var userBase = g.projectedTypes["UserBase"]!;
+    expect(userBase.interfaceNames, contains("BasicEntity"));
   });
 }
